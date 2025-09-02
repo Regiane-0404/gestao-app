@@ -23,7 +23,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::get('/clientes', [EntidadeController::class, 'index'])->name('clientes.index');
+    Route::resource('clientes', EntidadeController::class);
+    // Rotas para Fornecedores 
+    Route::resource('fornecedores', EntidadeController::class)
+        ->names('fornecedores'); // Isto cria nomes como 'fornecedores.index', 'fornecedores.create', etc.
 });
 
 require __DIR__ . '/auth.php';

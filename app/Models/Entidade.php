@@ -15,9 +15,9 @@ class Entidade extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'tipo',
-        'nif',
         'nome',
+        'nif',
+        'nic',
         'morada',
         'codigo_postal',
         'localidade',
@@ -29,5 +29,7 @@ class Entidade extends Model
         'consentimento_rgpd',
         'observacoes',
         'estado',
+        'is_cliente',
+        'is_fornecedor',
     ];
 }

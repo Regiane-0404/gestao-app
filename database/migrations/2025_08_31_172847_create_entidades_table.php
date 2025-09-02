@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('entidades', function (Blueprint $table) {
-            $table->id(); // BIGINT UNSIGNED AUTO_INCREMENT
-            $table->enum('tipo', ['cliente', 'fornecedor', 'ambos']);
-            $table->string('nif', 20)->unique()->nullable();
+            $table->id();
             $table->string('nome');
+            $table->string('nif', 20)->unique()->nullable();
+            $table->string('nic', 20)->unique()->nullable(); // <-- nic está aqui
             $table->string('morada')->nullable();
             $table->string('codigo_postal', 20)->nullable();
             $table->string('localidade')->nullable();
@@ -24,7 +24,9 @@ return new class extends Migration
             $table->boolean('consentimento_rgpd')->default(false);
             $table->text('observacoes')->nullable();
             $table->enum('estado', ['ativo', 'inativo'])->default('ativo');
-            $table->timestamps(); // created_at e updated_at
+            $table->boolean('is_cliente')->default(false); 
+            $table->boolean('is_fornecedor')->default(false); 
+            $table->timestamps();
         });
     }
 

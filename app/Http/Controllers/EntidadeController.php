@@ -2,28 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Entidade; // <-- ADICIONE ISTO
+use App\Models\Entidade;
 use Illuminate\Http\Request;
-use Inertia\Inertia; // <-- ADICIONE ISTO
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Redirect;
 
 class EntidadeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Buscar as entidades que são 'cliente' ou 'ambos'
-        $clientes = Entidade::where('tipo', 'cliente')
-            ->orWhere('tipo', 'ambos')
-            ->orderBy('nome') // Ordenar por nome
-            ->get();
+        // Determina se estamos a ver clientes ou fornecedores com base na rota
+        $isFornecedores = $request->routeIs('fornecedores.index');
 
-        // 2. Enviar os dados para a página Vue
+        $query = Entidade::query();
+
+        if ($isFornecedores) {
+            $query->where('is_fornecedor', true);
+            $pageTitle = 'Lista de Fornecedores';
+            $routeName = 'fornecedores.index';
+        } else {
+            $query->where('is_cliente', true);
+            $pageTitle = 'Lista de Clientes';
+            $routeName = 'clientes.index';
+        }
+
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('nome', 'like', "%{$searchTerm}%")
+                    ->orWhere('nif', 'like', "%{$searchTerm}%")
+                    ->orWhere('nic', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $entidades = $query->latest()->paginate(10)->withQueryString();
+
         return Inertia::render('Entidades/Index', [
-            'clientes' => $clientes,
+            'entidades' => $entidades,
+            'filters' => $request->only(['search']),
+            'pageTitle' => $pageTitle, // Título dinâmico
+            'routeName' => $routeName, // Rota dinâmica para pesquisa e botões
         ]);
     }
+    public function create(Request $request)
+    {
+        // Determina se estamos a criar um cliente ou um fornecedor
+        $isFornecedores = $request->routeIs('fornecedores.create');
 
-    // ... (resto dos métodos vazios)
+        return Inertia::render('Entidades/Create', [
+            'isFornecedores' => $isFornecedores,
+        ]);
+    }
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'nome' => 'required|string|max:255',
+            'nif' => 'nullable|string|max:20|unique:entidades,nif',
+            'nic' => 'nullable|string|max:20|unique:entidades,nic',
+            'email' => 'nullable|email|max:255',
+            'telemovel' => 'nullable|string|max:20',
+            'is_cliente' => 'boolean',
+            'is_fornecedor' => 'boolean',
+            // Adicionar outras validações aqui conforme necessário
+        ]);
+
+        Entidade::create($validatedData);
+
+        // Lógica de redirecionamento inteligente
+        if ($request->input('is_fornecedor') && !$request->input('is_cliente')) {
+            // Se for APENAS fornecedor, volta para a lista de fornecedores
+            return Redirect::route('fornecedores.index')->with('success', 'Fornecedor criado com sucesso.');
+        }
+
+        // Para todos os outros casos (apenas cliente, ou ambos), volta para a lista de clientes
+        return Redirect::route('clientes.index')->with('success', 'Entidade criada com sucesso.');
+    }
 }
