@@ -7,61 +7,36 @@ import { Label } from '@/Components/ui/label'
 import { Checkbox } from '@/Components/ui/checkbox'
 
 const props = defineProps({
-    entidade: Object, // Esta prop pode chegar como 'undefined'
+    entidade: Object,
     sourceRoute: String,
 })
 
-// --- PASSO DE DEBUG ---
-// Esta linha vai mostrar-nos na consola exatamente o que o controlador enviou.
-console.log('Props recebidas na página Edit:', props)
-// --- FIM DO DEBUG ---
-
-// Inicializamos o formulário com valores vazios para evitar o erro.
+// A inicialização do formulário é feita de forma mais direta agora
 const form = useForm({
-    nome: '',
-    nif: '',
-    nic: '',
-    morada: '',
-    codigo_postal: '',
-    localidade: '',
-    pais: '',
-    telemovel: '',
-    email: '',
-    is_cliente: false,
-    is_fornecedor: false,
+    nome: props.entidade?.nome || '',
+    nif: props.entidade?.nif || '',
+    nic: props.entidade?.nic || '',
+    morada: props.entidade?.morada || '',
+    codigo_postal: props.entidade?.codigo_postal || '',
+    localidade: props.entidade?.localidade || '',
+    pais: props.entidade?.pais || '',
+    telemovel: props.entidade?.telemovel || '',
+    email: props.entidade?.email || '',
+    is_cliente: !!props.entidade?.is_cliente,
+    is_fornecedor: !!props.entidade?.is_fornecedor,
 })
 
-// Apenas se a prop 'entidade' existir é que preenchemos o formulário.
-// Isto impede o erro "Cannot read properties of undefined".
-if (props.entidade) {
-    form.defaults({
-        nome: props.entidade.nome,
-        nif: props.entidade.nif,
-        nic: props.entidade.nic,
-        morada: props.entidade.morada,
-        codigo_postal: props.entidade.codigo_postal,
-        localidade: props.entidade.localidade,
-        pais: props.entidade.pais,
-        telemovel: props.entidade.telemovel,
-        email: props.entidade.email,
-        is_cliente: !!props.entidade.is_cliente,
-        is_fornecedor: !!props.entidade.is_fornecedor,
-    })
-    form.reset() // Aplica os valores definidos acima ao estado atual do formulário
-}
-
 const submit = () => {
-    // A lógica de submissão continua a mesma
     const updateRouteName = props.sourceRoute.replace('.index', '.update')
     const paramName = props.sourceRoute.includes('clientes')
         ? 'cliente'
         : 'fornecedor'
 
+    // O form.put envia todos os dados do formulário automaticamente.
+    // Não precisamos de construir um payload manual.
     form.put(route(updateRouteName, { [paramName]: props.entidade.id }))
 }
 </script>
-
-<!-- O TEMPLATE (HTML) NÃO MUDA NADA -->
 <template>
     <Head :title="`Editar Entidade: ${form.nome || ''}`" />
 
@@ -81,7 +56,7 @@ const submit = () => {
                         <div
                             class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6"
                         >
-                            <!-- Nome (ocupa as 2 colunas) -->
+                            <!-- Nome (sem alterações) -->
                             <div class="md:col-span-2">
                                 <Label for="nome">Nome</Label>
                                 <Input
@@ -102,12 +77,15 @@ const submit = () => {
                             <!-- NIF e NIC lado a lado -->
                             <div>
                                 <Label for="nif">NIF</Label>
+                                <!-- INÍCIO DA ALTERAÇÃO -->
                                 <Input
                                     id="nif"
                                     v-model="form.nif"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="mt-1 block w-full bg-gray-100 cursor-not-allowed"
+                                    readonly
                                 />
+                                <!-- FIM DA ALTERAÇÃO -->
                                 <div
                                     v-if="form.errors.nif"
                                     class="text-sm text-red-600 mt-1"
@@ -117,12 +95,15 @@ const submit = () => {
                             </div>
                             <div>
                                 <Label for="nic">NIC / NIPC</Label>
+                                <!-- INÍCIO DA ALTERAÇÃO -->
                                 <Input
                                     id="nic"
                                     v-model="form.nic"
                                     type="text"
-                                    class="mt-1 block w-full"
+                                    class="mt-1 block w-full bg-gray-100 cursor-not-allowed"
+                                    readonly
                                 />
+                                <!-- FIM DA ALTERAÇÃO -->
                                 <div
                                     v-if="form.errors.nic"
                                     class="text-sm text-red-600 mt-1"
@@ -131,7 +112,7 @@ const submit = () => {
                                 </div>
                             </div>
 
-                            <!-- Morada (ocupa as 2 colunas) -->
+                            <!-- Resto do formulário (sem alterações) -->
                             <div class="md:col-span-2">
                                 <Label for="morada">Morada</Label>
                                 <Input
@@ -141,8 +122,6 @@ const submit = () => {
                                     class="mt-1 block w-full"
                                 />
                             </div>
-
-                            <!-- Resto dos campos (lado a lado) -->
                             <div>
                                 <Label for="codigo_postal">Código Postal</Label>
                                 <Input
@@ -194,8 +173,6 @@ const submit = () => {
                                     {{ form.errors.email }}
                                 </div>
                             </div>
-
-                            <!-- Checkboxes -->
                             <div class="md:col-span-2">
                                 <Label>Tipo de Entidade</Label>
                                 <div class="flex items-center space-x-6 mt-2">
