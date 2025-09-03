@@ -2,25 +2,33 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
+import { MoreHorizontal } from 'lucide-vue-next'
 import { Input } from '@/Components/ui/input'
 import { Button } from '@/Components/ui/button'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu'
 
 const props = defineProps({
     entidades: Object,
     filters: Object,
-    pageTitle: String, // Prop para o título dinâmico
-    routeName: String, // Prop para a rota dinâmica
+    pageTitle: String,
+    sourceRoute: String, // <-- Corrigido para sourceRoute
 })
 
 const search = ref(props.filters.search)
 
-// A função watch agora usa a rota dinâmica para a pesquisa
 let searchTimeout = null
 watch(search, (newValue) => {
     clearTimeout(searchTimeout)
     searchTimeout = setTimeout(() => {
         router.get(
-            route(props.routeName), // <-- ALTERAÇÃO IMPORTANTE AQUI
+            route(props.sourceRoute), // <-- Corrigido para sourceRoute
             { search: newValue },
             {
                 preserveState: true,
@@ -29,14 +37,20 @@ watch(search, (newValue) => {
         )
     }, 300)
 })
+
+const editEntidade = (entidadeId) => {
+    const editRouteName = props.sourceRoute.replace('.index', '.edit') // <-- Corrigido para sourceRoute
+    const paramName = props.sourceRoute.includes('clientes') // <-- Corrigido para sourceRoute
+        ? 'cliente'
+        : 'fornecedor'
+    router.get(route(editRouteName, { [paramName]: entidadeId }))
+}
 </script>
 
 <template>
-    <!-- O título da aba do navegador agora é dinâmico -->
     <Head :title="pageTitle.replace('Lista de ', '')" />
 
     <AuthenticatedLayout>
-        <!-- O título da página agora é dinâmico -->
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ pageTitle }}
@@ -48,13 +62,29 @@ watch(search, (newValue) => {
                 <div
                     class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
                 >
-                    <div class="mb-6">
+                    <div class="flex justify-between items-center mb-6">
                         <Input
                             v-model="search"
                             type="text"
                             placeholder="Pesquisar por nome, NIF ou NIC..."
                             class="w-full md:w-1/2 placeholder:text-gray-400"
                         />
+                        <Link
+                            :href="
+                                route(sourceRoute.replace('.index', '.create'))
+                            "
+                        >
+                            <!-- Corrigido para sourceRoute -->
+                            <Button>
+                                Adicionar
+                                {{
+                                    sourceRoute.includes('clientes')
+                                        ? 'Cliente'
+                                        : 'Fornecedor'
+                                }}
+                                <!-- Corrigido para sourceRoute -->
+                            </Button>
+                        </Link>
                     </div>
 
                     <table class="min-w-full bg-white">
@@ -66,11 +96,14 @@ watch(search, (newValue) => {
                                 </th>
                                 <th class="py-2 px-4 border-b">Email</th>
                                 <th class="py-2 px-4 border-b">Telefone</th>
+                                <th class="py-2 px-4 border-b text-right">
+                                    Ações
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-if="entidades.data.length === 0">
-                                <td colspan="4" class="text-center py-4">
+                                <td colspan="5" class="text-center py-4">
                                     Nenhuma entidade encontrada.
                                 </td>
                             </tr>
@@ -91,17 +124,46 @@ watch(search, (newValue) => {
                                 <td class="py-2 px-4 border-b">
                                     {{ entidade.telemovel }}
                                 </td>
+                                <td class="py-2 px-4 border-b text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger as-child>
+                                            <Button
+                                                variant="ghost"
+                                                class="w-8 h-8 p-0"
+                                            >
+                                                <span class="sr-only"
+                                                    >Abrir menu</span
+                                                >
+                                                <MoreHorizontal
+                                                    class="w-4 h-4"
+                                                />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel
+                                                >Ações</DropdownMenuLabel
+                                            >
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                @select="
+                                                    editEntidade(entidade.id)
+                                                "
+                                                class="cursor-pointer"
+                                            >
+                                                Editar
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
 
                     <div
-                        class="mt-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0"
+                        v-if="entidades.links.length > 3"
+                        class="mt-6 flex justify-center"
                     >
-                        <div
-                            v-if="entidades.links.length > 3"
-                            class="flex items-center space-x-1"
-                        >
+                        <div class="flex items-center space-x-1">
                             <template
                                 v-for="(link, key) in entidades.links"
                                 :key="key"
@@ -121,22 +183,6 @@ watch(search, (newValue) => {
                                 />
                             </template>
                         </div>
-
-                        <!-- O botão agora é dinâmico -->
-                        <Link
-                            :href="
-                                route(routeName.replace('.index', '.create'))
-                            "
-                        >
-                            <Button>
-                                Adicionar
-                                {{
-                                    routeName.includes('clientes')
-                                        ? 'Cliente'
-                                        : 'Fornecedor'
-                                }}
-                            </Button>
-                        </Link>
                     </div>
                 </div>
             </div>

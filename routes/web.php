@@ -26,7 +26,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('clientes', EntidadeController::class);
     // Rotas para Fornecedores 
     Route::resource('fornecedores', EntidadeController::class)
-        ->names('fornecedores'); // Isto cria nomes como 'fornecedores.index', 'fornecedores.create', etc.
+    ->parameters(['fornecedores' => 'fornecedor']) 
+    ->names('fornecedores');
 });
 
 require __DIR__ . '/auth.php';
