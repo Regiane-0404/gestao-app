@@ -43,22 +43,29 @@ import {
         <nav class="flex-grow p-4 space-y-2">
             <NavLink
                 :href="route('clientes.index')"
-                :active="route().current('clientes.index')"
+                :active="route().current('clientes.*')"
             >
                 <Users class="h-5 w-5 mr-3" />
                 Clientes
             </NavLink>
             <NavLink
                 :href="route('fornecedores.index')"
-                :active="route().current('fornecedores.index')"
+                :active="route().current('fornecedores.*')"
             >
                 <Building class="h-5 w-5 mr-3" />
                 Fornecedores
             </NavLink>
-            <NavLink href="#">
+
+            <!-- --- INÍCIO DA CORREÇÃO --- -->
+            <NavLink
+                :href="route('contactos.index')"
+                :active="route().current('contactos.*')"
+            >
                 <BookUser class="h-5 w-5 mr-3" />
                 Contactos
             </NavLink>
+            <!-- --- FIM DA CORREÇÃO --- -->
+
             <NavLink href="#">
                 <FileText class="h-5 w-5 mr-3" />
                 Propostas

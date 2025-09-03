@@ -1,65 +1,29 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
-import { ref, watch } from 'vue'
-// --- INÍCIO DA ALTERAÇÃO ---
-import { MoreVertical, Search, Trash2 } from 'lucide-vue-next' // Adicionado Search e trocado MoreHorizontal por MoreVertical
-// --- FIM DA ALTERAÇÃO ---
-import { Input } from '@/Components/ui/input'
+import { MoreVertical, Trash2 } from 'lucide-vue-next'
 import { Button } from '@/Components/ui/button'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    // DropdownMenuLabel, // Removido, conforme sugerido
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
 
 const props = defineProps({
-    entidades: Object,
+    contactos: Object,
     filters: Object,
-    pageTitle: String,
-    sourceRoute: String,
 })
 
-const search = ref(props.filters.search)
-
-let searchTimeout = null
-watch(search, (newValue) => {
-    clearTimeout(searchTimeout)
-    searchTimeout = setTimeout(() => {
-        router.get(
-            route(props.sourceRoute),
-            { search: newValue },
-            {
-                preserveState: true,
-                replace: true,
-            }
-        )
-    }, 300)
-})
-
-const editEntidade = (entidadeId) => {
-    const editRouteName = props.sourceRoute.replace('.index', '.edit')
-    const paramName = props.sourceRoute.includes('clientes')
-        ? 'cliente'
-        : 'fornecedor'
-    router.get(route(editRouteName, { [paramName]: entidadeId }))
+// Funções para Editar e Eliminar (a serem implementadas nos próximos passos)
+const editContacto = (contactoId) => {
+    router.get(route('contactos.edit', contactoId))
 }
 
-const confirmDelete = (entidadeId) => {
-    if (
-        confirm(
-            'Tem a certeza que deseja eliminar esta entidade? Esta ação não pode ser revertida.'
-        )
-    ) {
-        const destroyRouteName = props.sourceRoute.replace('.index', '.destroy')
-        const paramName = props.sourceRoute.includes('clientes')
-            ? 'cliente'
-            : 'fornecedor'
-
-        router.delete(route(destroyRouteName, { [paramName]: entidadeId }), {
+const confirmDelete = (contactoId) => {
+    if (confirm('Tem a certeza que deseja eliminar este contacto?')) {
+        router.delete(route('contactos.destroy', contactoId), {
             preserveScroll: true,
         })
     }
@@ -67,15 +31,13 @@ const confirmDelete = (entidadeId) => {
 </script>
 
 <template>
-    <Head :title="pageTitle.replace('Lista de ', '')" />
+    <Head title="Contactos" />
 
     <AuthenticatedLayout>
         <template #header>
-            <!-- --- INÍCIO DA ALTERAÇÃO: Título mais destacado --- -->
             <h2 class="font-bold text-2xl text-gray-800 leading-tight">
-                {{ pageTitle }}
+                Lista de Contactos
             </h2>
-            <!-- --- FIM DA ALTERAÇÃO --- -->
         </template>
 
         <div class="py-12">
@@ -83,38 +45,13 @@ const confirmDelete = (entidadeId) => {
                 <div
                     class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
                 >
-                    <!-- --- INÍCIO DA ALTERAÇÃO: Barra superior redesenhada --- -->
                     <div class="flex justify-between items-center mb-6">
-                        <!-- Campo de pesquisa com ícone -->
-                        <div class="relative w-full max-w-sm">
-                            <Search
-                                class="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400"
-                            />
-                            <Input
-                                v-model="search"
-                                type="text"
-                                placeholder="Pesquisar por nome, NIF ou NIC..."
-                                class="pl-9 w-full placeholder:text-gray-400"
-                            />
-                        </div>
-
-                        <!-- Botão Adicionar alinhado à direita -->
-                        <Link
-                            :href="
-                                route(sourceRoute.replace('.index', '.create'))
-                            "
-                        >
-                            <Button>
-                                Adicionar
-                                {{
-                                    sourceRoute.includes('clientes')
-                                        ? 'Cliente'
-                                        : 'Fornecedor'
-                                }}
-                            </Button>
+                        <!-- (Barra de pesquisa a ser adicionada) -->
+                        <div></div>
+                        <Link :href="route('contactos.create')">
+                            <Button>Adicionar Contacto</Button>
                         </Link>
                     </div>
-                    <!-- --- FIM DA ALTERAÇÃO --- -->
 
                     <table class="min-w-full bg-white">
                         <thead class="text-left text-gray-600">
@@ -127,17 +64,22 @@ const confirmDelete = (entidadeId) => {
                                 <th
                                     class="py-3 px-4 font-medium border-b border-gray-200"
                                 >
-                                    Nº Contribuinte
+                                    Função
+                                </th>
+                                <th
+                                    class="py-3 px-4 font-medium border-b border-gray-200"
+                                >
+                                    Entidade
+                                </th>
+                                <th
+                                    class="py-3 px-4 font-medium border-b border-gray-200"
+                                >
+                                    Telemóvel
                                 </th>
                                 <th
                                     class="py-3 px-4 font-medium border-b border-gray-200"
                                 >
                                     Email
-                                </th>
-                                <th
-                                    class="py-3 px-4 font-medium border-b border-gray-200"
-                                >
-                                    Telefone
                                 </th>
                                 <th
                                     class="py-3 px-4 font-medium border-b border-gray-200 text-right"
@@ -147,29 +89,33 @@ const confirmDelete = (entidadeId) => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-if="entidades.data.length === 0">
+                            <tr v-if="contactos.data.length === 0">
                                 <td
-                                    colspan="5"
+                                    colspan="6"
                                     class="text-center py-6 text-gray-500"
                                 >
-                                    Nenhuma entidade encontrada.
+                                    Nenhum contacto encontrado.
                                 </td>
                             </tr>
-                            <!-- --- INÍCIO DA ALTERAÇÃO: Linhas da tabela mais suaves --- -->
                             <tr
-                                v-for="entidade in entidades.data"
-                                :key="entidade.id"
+                                v-for="contacto in contactos.data"
+                                :key="contacto.id"
                                 class="hover:bg-gray-50 border-b border-gray-200"
                             >
-                                <!-- --- FIM DA ALTERAÇÃO --- -->
-                                <td class="py-3 px-4">{{ entidade.nome }}</td>
                                 <td class="py-3 px-4">
-                                    {{ entidade.nif || entidade.nic }}
+                                    {{ contacto.nome }} {{ contacto.apelido }}
                                 </td>
-                                <td class="py-3 px-4">{{ entidade.email }}</td>
                                 <td class="py-3 px-4">
-                                    {{ entidade.telemovel }}
+                                    {{ contacto.funcao?.nome || 'N/A' }}
                                 </td>
+                                <td class="py-3 px-4">
+                                    {{ contacto.entidade?.nome || 'N/A' }}
+                                </td>
+                                <td class="py-3 px-4">
+                                    {{ contacto.telemovel }}
+                                </td>
+                                <td class="py-3 px-4">{{ contacto.email }}</td>
+                                <!-- INÍCIO DA ALTERAÇÃO -->
                                 <td class="py-3 px-4 text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
@@ -180,17 +126,13 @@ const confirmDelete = (entidadeId) => {
                                                 <span class="sr-only"
                                                     >Abrir menu</span
                                                 >
-                                                <!-- --- INÍCIO DA ALTERAÇÃO: Ícone de três pontos vertical --- -->
                                                 <MoreVertical class="w-4 h-4" />
-                                                <!-- --- FIM DA ALTERAÇÃO --- -->
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <!-- --- INÍCIO DA ALTERAÇÃO: Rótulo "Ações" removido --- -->
-                                            <!-- <DropdownMenuLabel>Ações</DropdownMenuLabel> -->
                                             <DropdownMenuItem
                                                 @select="
-                                                    editEntidade(entidade.id)
+                                                    editContacto(contacto.id)
                                                 "
                                                 class="cursor-pointer"
                                             >
@@ -199,27 +141,22 @@ const confirmDelete = (entidadeId) => {
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
                                                 @select="
-                                                    confirmDelete(entidade.id)
+                                                    confirmDelete(contacto.id)
                                                 "
                                                 class="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                                             >
                                                 <Trash2 class="w-4 h-4 mr-2" />
                                                 Eliminar
                                             </DropdownMenuItem>
-                                            <!-- --- FIM DA ALTERAÇÃO --- -->
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </td>
+                                <!-- FIM DA ALTERAÇÃO -->
                             </tr>
                         </tbody>
                     </table>
 
-                    <div
-                        v-if="entidades.links.length > 3"
-                        class="mt-6 flex justify-center"
-                    >
-                        <!-- Paginação (sem alterações) -->
-                    </div>
+                    <!-- (Paginação a ser adicionada) -->
                 </div>
             </div>
         </div>

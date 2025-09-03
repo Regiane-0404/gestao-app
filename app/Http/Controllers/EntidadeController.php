@@ -117,4 +117,20 @@ class EntidadeController extends Controller
 
         return Redirect::route($targetRoute)->with('success', 'Entidade atualizada com sucesso.');
     }
+    public function destroy(Request $request, $id) // <-- MUDANÇA CRUCIAL AQUI
+    {
+        // 1. Carregamos manualmente a entidade que queremos eliminar.
+        $entidade = Entidade::findOrFail($id);
+
+        // 2. Agora que temos a certeza que temos o objeto correto, eliminamos.
+        $entidade->delete();
+
+        // 3. A lógica de redirecionamento continua a mesma.
+        $referer = $request->headers->get('referer');
+        $isFromFornecedores = str_contains($referer, '/fornecedores');
+
+        $targetRoute = $isFromFornecedores ? 'fornecedores.index' : 'clientes.index';
+
+        return Redirect::back()->with('success', 'Entidade eliminada com sucesso.');
+    }
 }

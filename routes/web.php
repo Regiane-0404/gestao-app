@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EntidadeController;
+use App\Http\Controllers\ContactoController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -26,8 +27,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('clientes', EntidadeController::class);
     // Rotas para Fornecedores 
     Route::resource('fornecedores', EntidadeController::class)
-    ->parameters(['fornecedores' => 'fornecedor']) 
-    ->names('fornecedores');
+        ->parameters(['fornecedores' => 'fornecedor'])
+        ->names('fornecedores');
+    Route::resource('contactos', ContactoController::class);
 });
-
 require __DIR__ . '/auth.php';
