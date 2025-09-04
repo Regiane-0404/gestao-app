@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EntidadeController;
 use App\Http\Controllers\ContactoController;
+use App\Http\Controllers\ArtigoController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,5 +31,10 @@ Route::middleware('auth')->group(function () {
         ->parameters(['fornecedores' => 'fornecedor'])
         ->names('fornecedores');
     Route::resource('contactos', ContactoController::class);
+    // --- Rotas de Configuração ---
+    Route::prefix('configuracoes')->name('configuracoes.')->group(function () {
+        Route::resource('artigos', ArtigoController::class);
+        // No futuro, outras rotas de configuração (IVA, Funções, etc.) virão aqui
+    });
 });
 require __DIR__ . '/auth.php';

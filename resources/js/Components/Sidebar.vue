@@ -25,6 +25,7 @@ import {
     ShieldCheck,
     ScrollText,
     Building2,
+    Package, // <-- Adicionar o ícone para Artigos
 } from 'lucide-vue-next'
 </script>
 
@@ -55,8 +56,6 @@ import {
                 <Building class="h-5 w-5 mr-3" />
                 Fornecedores
             </NavLink>
-
-            <!-- --- INÍCIO DA CORREÇÃO --- -->
             <NavLink
                 :href="route('contactos.index')"
                 :active="route().current('contactos.*')"
@@ -64,8 +63,6 @@ import {
                 <BookUser class="h-5 w-5 mr-3" />
                 Contactos
             </NavLink>
-            <!-- --- FIM DA CORREÇÃO --- -->
-
             <NavLink href="#">
                 <FileText class="h-5 w-5 mr-3" />
                 Propostas
@@ -101,7 +98,15 @@ import {
 
             <!-- Menu Configurações e Acessos -->
             <div class="pt-8">
-                <Accordion type="single" collapsible>
+                <Accordion
+                    type="single"
+                    collapsible
+                    :default-value="
+                        route().current('configuracoes.*')
+                            ? 'configuracoes'
+                            : ''
+                    "
+                >
                     <AccordionItem value="gestao-acessos" class="border-none">
                         <AccordionTrigger
                             class="text-white hover:no-underline hover:bg-gray-700 rounded-md"
@@ -132,7 +137,17 @@ import {
                                 Configurações
                             </div>
                         </AccordionTrigger>
+                        <!-- --- INÍCIO DA ALTERAÇÃO --- -->
                         <AccordionContent class="pl-8 space-y-2 pt-2">
+                            <NavLink
+                                :href="route('configuracoes.artigos.index')"
+                                :active="
+                                    route().current('configuracoes.artigos.*')
+                                "
+                            >
+                                <Package class="h-4 w-4 mr-2" />
+                                Artigos
+                            </NavLink>
                             <NavLink href="#">
                                 <Building2 class="h-4 w-4 mr-2" />
                                 Empresa
@@ -142,6 +157,7 @@ import {
                                 Logs
                             </NavLink>
                         </AccordionContent>
+                        <!-- --- FIM DA ALTERAÇÃO --- -->
                     </AccordionItem>
                 </Accordion>
             </div>

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contacto;
-use App\Models\Entidade; // <-- Adicionar import
-use App\Models\ContactoFuncao; // <-- Adicionar import
+use App\Models\Entidade;
+use App\Models\ContactoFuncao;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Redirect; // <-- Adicionar import
+use Illuminate\Support\Facades\Redirect;
 
 class ContactoController extends Controller
 {
@@ -43,13 +43,10 @@ class ContactoController extends Controller
      */
     public function create()
     {
-        // --- INÍCIO DA ALTERAÇÃO ---
         return Inertia::render('Contactos/Create', [
-            // Enviamos a lista de todas as entidades e funções para os dropdowns do formulário
             'entidades' => Entidade::orderBy('nome')->get(['id', 'nome']),
             'funcoes' => ContactoFuncao::where('estado', 'ativo')->orderBy('nome')->get(['id', 'nome']),
         ]);
-        // --- FIM DA ALTERAÇÃO ---
     }
 
     /**
@@ -57,7 +54,6 @@ class ContactoController extends Controller
      */
     public function store(Request $request)
     {
-        // --- INÍCIO DA ALTERAÇÃO ---
         $validatedData = $request->validate([
             'entidade_id' => 'required|exists:entidades,id',
             'contacto_funcao_id' => 'nullable|exists:contacto_funcoes,id',
@@ -73,8 +69,66 @@ class ContactoController extends Controller
         Contacto::create($validatedData);
 
         return Redirect::route('contactos.index')->with('success', 'Contacto criado com sucesso.');
-        // --- FIM DA ALTERAÇÃO ---
     }
 
-    // ... (o resto dos métodos continuam iguais e vazios por agora) ...
+    /**
+     * Display the specified resource.
+     */
+    public function show(Contacto $contacto)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    // --- INÍCIO DA ALTERAÇÃO ---
+    public function edit(Contacto $contacto)
+    {
+        // Carregamos o contacto e também as listas de entidades e funções para os dropdowns
+        return Inertia::render('Contactos/Edit', [
+            'contacto' => $contacto,
+            'entidades' => Entidade::orderBy('nome')->get(['id', 'nome']),
+            'funcoes' => ContactoFuncao::where('estado', 'ativo')->orderBy('nome')->get(['id', 'nome']),
+        ]);
+    }
+    // --- FIM DA ALTERAÇÃO ---
+
+    /**
+     * Update the specified resource in storage.
+     */
+    // --- INÍCIO DA ALTERAÇÃO ---
+    public function update(Request $request, Contacto $contacto)
+    {
+        $validatedData = $request->validate([
+            'entidade_id' => 'required|exists:entidades,id',
+            'contacto_funcao_id' => 'nullable|exists:contacto_funcoes,id',
+            'nome' => 'required|string|max:255',
+            'apelido' => 'nullable|string|max:255',
+            'telemovel' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'consentimento_rgpd' => 'boolean',
+            'observacoes' => 'nullable|string',
+            'estado' => 'required|in:ativo,inativo',
+        ]);
+
+        $contacto->update($validatedData);
+
+        return Redirect::route('contactos.index')->with('success', 'Contacto atualizado com sucesso.');
+    }
+    // --- FIM DA ALTERAÇÃO ---
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Contacto $contacto)
+    {
+        // --- INÍCIO DA ALTERAÇÃO ---
+        // O Route Model Binding já nos dá o contacto correto.
+        // Como o modelo usa SoftDeletes, isto irá preencher a coluna 'deleted_at'.
+        $contacto->delete();
+
+        return Redirect::back()->with('success', 'Contacto eliminado com sucesso.');
+        // --- FIM DA ALTERAÇÃO ---
+    }
 }
