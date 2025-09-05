@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { MoreVertical, Trash2 } from 'lucide-vue-next'
-import { Button } from '@/Components/ui/button'
+import Button from '@/Components/ui/button/Button.vue'
 import {
     DropdownMenu,
     DropdownMenuContent,

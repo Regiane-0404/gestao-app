@@ -21,16 +21,23 @@ class Artigo extends Model
         'estado',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
-        'preco' => 'decimal:2',
+        'preco' => 'decimal:2', // <-- CORRIGIDO AQUI
     ];
 
+    /**
+     * Um Artigo pertence a uma taxa de IVA.
+     */
     public function iva()
     {
         return $this->belongsTo(Iva::class);
     }
 
-    // --- INÍCIO DA ALTERAÇÃO ---
     /**
      * The "booted" method of the model.
      *
@@ -38,12 +45,21 @@ class Artigo extends Model
      */
     protected static function booted()
     {
-        // Define uma ação a ser executada ANTES de um novo artigo ser criado
+        // Gera a referência automática ao criar um novo artigo
         static::creating(function ($artigo) {
-            // Garante que só geramos a referência se ela não for fornecida manualmente
             if (empty($artigo->referencia)) {
                 $artigo->referencia = self::generateReference();
             }
+        });
+
+        // Altera o estado para 'inativo' antes de fazer o soft delete
+        static::deleting(function ($artigo) {
+            if ($artigo->isForceDeleting()) {
+                return;
+            }
+
+            $artigo->estado = 'inativo';
+            $artigo->save();
         });
     }
 
@@ -53,15 +69,10 @@ class Artigo extends Model
      */
     public static function generateReference()
     {
-        // Encontra o artigo com o ID mais alto (o último criado)
         $lastArtigo = self::withTrashed()->orderBy('id', 'desc')->first();
-
         $nextId = $lastArtigo ? $lastArtigo->id + 1 : 1;
-
-        // Formata o número com zeros à esquerda (ex: 1 -> 00001)
         $paddedId = str_pad($nextId, 5, '0', STR_PAD_LEFT);
 
         return 'ART-' . $paddedId;
     }
-    // --- FIM DA ALTERAÇÃO ---
 }

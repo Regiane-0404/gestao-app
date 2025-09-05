@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EntidadeController;
 use App\Http\Controllers\ContactoController;
+use App\Http\Controllers\PropostaController;
 use App\Http\Controllers\ArtigoController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,8 @@ Route::middleware('auth')->group(function () {
         ->parameters(['fornecedores' => 'fornecedor'])
         ->names('fornecedores');
     Route::resource('contactos', ContactoController::class);
+    // Rotas para Propostas
+    Route::resource('propostas', PropostaController::class);
     // --- Rotas de Configuração ---
     Route::prefix('configuracoes')->name('configuracoes.')->group(function () {
         Route::resource('artigos', ArtigoController::class);

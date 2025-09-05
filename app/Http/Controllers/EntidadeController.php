@@ -50,7 +50,7 @@ class EntidadeController extends Controller
     {
         $isFornecedores = $request->routeIs('fornecedores.create');
 
-        return Inertia::render('Entidades/Criar', [
+        return Inertia::render('Entidades/Create', [ // <-- CORRETO
             'isFornecedores' => $isFornecedores,
         ]);
     }

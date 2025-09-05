@@ -25,7 +25,7 @@ import {
     ShieldCheck,
     ScrollText,
     Building2,
-    Package, // <-- Adicionar o ícone para Artigos
+    Package,
 } from 'lucide-vue-next'
 </script>
 
@@ -49,6 +49,7 @@ import {
                 <Users class="h-5 w-5 mr-3" />
                 Clientes
             </NavLink>
+
             <NavLink
                 :href="route('fornecedores.index')"
                 :active="route().current('fornecedores.*')"
@@ -56,6 +57,7 @@ import {
                 <Building class="h-5 w-5 mr-3" />
                 Fornecedores
             </NavLink>
+
             <NavLink
                 :href="route('contactos.index')"
                 :active="route().current('contactos.*')"
@@ -63,10 +65,22 @@ import {
                 <BookUser class="h-5 w-5 mr-3" />
                 Contactos
             </NavLink>
-            <NavLink href="#">
+
+            <!-- --- INÍCIO DA CORREÇÃO --- -->
+            <Link
+                :href="route('propostas.index')"
+                class="flex items-center px-4 py-2 rounded text-sm font-medium"
+                :class="{
+                    'bg-gray-900 text-white': route().current('propostas.*'),
+                    'text-gray-300 hover:bg-gray-700 hover:text-white':
+                        !route().current('propostas.*'),
+                }"
+            >
                 <FileText class="h-5 w-5 mr-3" />
                 Propostas
-            </NavLink>
+            </Link>
+            <!-- --- FIM DA CORREÇÃO --- -->
+
             <NavLink href="#">
                 <Calendar class="h-5 w-5 mr-3" />
                 Calendário
@@ -137,7 +151,7 @@ import {
                                 Configurações
                             </div>
                         </AccordionTrigger>
-                        <!-- --- INÍCIO DA ALTERAÇÃO --- -->
+
                         <AccordionContent class="pl-8 space-y-2 pt-2">
                             <NavLink
                                 :href="route('configuracoes.artigos.index')"
@@ -157,7 +171,6 @@ import {
                                 Logs
                             </NavLink>
                         </AccordionContent>
-                        <!-- --- FIM DA ALTERAÇÃO --- -->
                     </AccordionItem>
                 </Accordion>
             </div>

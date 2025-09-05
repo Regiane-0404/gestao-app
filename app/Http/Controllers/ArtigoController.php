@@ -3,16 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artigo;
-use App\Models\Iva; // <-- Adicionar import
+use App\Models\Iva;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Redirect; // <-- Adicionar import
+use Illuminate\Support\Facades\Redirect;
 
 class ArtigoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = Artigo::with('iva');
@@ -34,27 +31,16 @@ class ArtigoController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        // --- INÍCIO DA ALTERAÇÃO ---
         return Inertia::render('Configuracoes/Artigos/Create', [
-            // Enviamos a lista de taxas de IVA ativas para o dropdown do formulário
             'ivas' => Iva::where('estado', 'ativo')->orderBy('taxa')->get(['id', 'nome', 'taxa']),
         ]);
-        // --- FIM DA ALTERAÇÃO ---
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // --- INÍCIO DA ALTERAÇÃO ---
         $validatedData = $request->validate([
-            // 'referencia' => 'required|...', // REMOVER ESTA LINHA
             'nome' => 'required|string|max:255',
             'descricao' => 'nullable|string',
             'preco' => 'required|numeric|min:0',
@@ -62,11 +48,47 @@ class ArtigoController extends Controller
             'observacoes' => 'nullable|string',
             'estado' => 'required|in:ativo,inativo',
         ]);
-        // --- FIM DA ALTERAÇÃO ---
 
         Artigo::create($validatedData);
 
         return Redirect::route('configuracoes.artigos.index')->with('success', 'Artigo criado com sucesso.');
     }
-    // ... (o resto dos métodos continuam vazios por agora) ...
+
+    public function show(Artigo $artigo)
+    {
+        // Não iremos usar esta rota por agora.
+    }
+
+    // --- LÓGICA DE EDIÇÃO ---
+    public function edit(Artigo $artigo)
+    {
+        return Inertia::render('Configuracoes/Artigos/Edit', [
+            'artigo' => $artigo,
+            'ivas' => Iva::where('estado', 'ativo')->orderBy('taxa')->get(['id', 'nome', 'taxa']),
+        ]);
+    }
+
+    public function update(Request $request, Artigo $artigo)
+    {
+        $validatedData = $request->validate([
+            'nome' => 'required|string|max:255',
+            'descricao' => 'nullable|string',
+            'preco' => 'required|numeric|min:0',
+            'iva_id' => 'required|exists:ivas,id',
+            'observacoes' => 'nullable|string',
+            'estado' => 'required|in:ativo,inativo',
+        ]);
+
+        $artigo->update($validatedData);
+
+        return Redirect::route('configuracoes.artigos.index')->with('success', 'Artigo atualizado com sucesso.');
+    }
+
+    // --- LÓGICA DE ELIMINAÇÃO ---
+    public function destroy(Artigo $artigo)
+    {
+        $artigo->delete(); // Isto irá fazer um soft delete
+
+        return Redirect::back()->with('success', 'Artigo eliminado com sucesso.');
+    }
 }

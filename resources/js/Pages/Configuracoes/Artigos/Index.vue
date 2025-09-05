@@ -1,19 +1,38 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { MoreVertical, Trash2 } from 'lucide-vue-next'
+import Button from '@/Components/ui/button/Button.vue'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu'
 
-// Recebemos os artigos que o controlador enviou
 const props = defineProps({
     artigos: Object,
     filters: Object,
 })
 
-// Função para formatar o preço como moeda
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-PT', {
         style: 'currency',
         currency: 'EUR',
     }).format(value)
+}
+
+const editArtigo = (artigoId) => {
+    router.get(route('configuracoes.artigos.edit', artigoId))
+}
+
+const confirmDelete = (artigoId) => {
+    if (confirm('Tem a certeza que deseja eliminar este artigo?')) {
+        router.delete(route('configuracoes.artigos.destroy', artigoId), {
+            preserveScroll: true,
+        })
+    }
 }
 </script>
 
@@ -33,10 +52,7 @@ const formatCurrency = (value) => {
                     class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
                 >
                     <div class="flex justify-between items-center mb-6">
-                        <!-- (Espaço para a barra de pesquisa futura) -->
                         <div></div>
-
-                        <!-- Botão Adicionar Artigo -->
                         <Link :href="route('configuracoes.artigos.create')">
                             <Button>Adicionar Artigo</Button>
                         </Link>
@@ -94,21 +110,48 @@ const formatCurrency = (value) => {
                                     {{ formatCurrency(artigo.preco) }}
                                 </td>
                                 <td class="py-3 px-4">
-                                    {{ artigo.iva?.taxa || 'N/A' }}%
+                                    {{
+                                        artigo.iva
+                                            ? `${parseInt(artigo.iva.taxa)}%`
+                                            : 'N/A'
+                                    }}
                                 </td>
                                 <td class="py-3 px-4 text-right">
-                                    <!-- (Espaço para o menu de ações futuro) -->
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger as-child>
+                                            <Button
+                                                variant="ghost"
+                                                class="w-8 h-8 p-0"
+                                            >
+                                                <span class="sr-only"
+                                                    >Abrir menu</span
+                                                >
+                                                <MoreVertical class="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                @select="editArtigo(artigo.id)"
+                                                class="cursor-pointer"
+                                            >
+                                                Editar
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                @select="
+                                                    confirmDelete(artigo.id)
+                                                "
+                                                class="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                            >
+                                                <Trash2 class="w-4 h-4 mr-2" />
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-
-                    <div
-                        v-if="artigos.links.length > 3"
-                        class="mt-6 flex justify-center"
-                    >
-                        <!-- (Paginação virá aqui) -->
-                    </div>
                 </div>
             </div>
         </div>

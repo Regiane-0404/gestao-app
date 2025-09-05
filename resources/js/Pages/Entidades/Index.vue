@@ -2,16 +2,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
-// --- INÍCIO DA ALTERAÇÃO ---
-import { MoreVertical, Search, Trash2 } from 'lucide-vue-next' // Adicionado Search e trocado MoreHorizontal por MoreVertical
-// --- FIM DA ALTERAÇÃO ---
+import { MoreVertical, Search, Trash2 } from 'lucide-vue-next'
 import { Input } from '@/Components/ui/input'
-import { Button } from '@/Components/ui/button'
+
+// --- INÍCIO DA CORREÇÃO ---
+// Esta é a única linha que precisa de ser diferente do seu código do Git
+import Button from '@/Components/ui/button/Button.vue'
+// --- FIM DA CORREÇÃO ---
+
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    // DropdownMenuLabel, // Removido, conforme sugerido
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
@@ -71,11 +73,9 @@ const confirmDelete = (entidadeId) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <!-- --- INÍCIO DA ALTERAÇÃO: Título mais destacado --- -->
             <h2 class="font-bold text-2xl text-gray-800 leading-tight">
                 {{ pageTitle }}
             </h2>
-            <!-- --- FIM DA ALTERAÇÃO --- -->
         </template>
 
         <div class="py-12">
@@ -83,9 +83,7 @@ const confirmDelete = (entidadeId) => {
                 <div
                     class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
                 >
-                    <!-- --- INÍCIO DA ALTERAÇÃO: Barra superior redesenhada --- -->
                     <div class="flex justify-between items-center mb-6">
-                        <!-- Campo de pesquisa com ícone -->
                         <div class="relative w-full max-w-sm">
                             <Search
                                 class="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400"
@@ -98,7 +96,6 @@ const confirmDelete = (entidadeId) => {
                             />
                         </div>
 
-                        <!-- Botão Adicionar alinhado à direita -->
                         <Link
                             :href="
                                 route(sourceRoute.replace('.index', '.create'))
@@ -114,7 +111,6 @@ const confirmDelete = (entidadeId) => {
                             </Button>
                         </Link>
                     </div>
-                    <!-- --- FIM DA ALTERAÇÃO --- -->
 
                     <table class="min-w-full bg-white">
                         <thead class="text-left text-gray-600">
@@ -155,13 +151,11 @@ const confirmDelete = (entidadeId) => {
                                     Nenhuma entidade encontrada.
                                 </td>
                             </tr>
-                            <!-- --- INÍCIO DA ALTERAÇÃO: Linhas da tabela mais suaves --- -->
                             <tr
                                 v-for="entidade in entidades.data"
                                 :key="entidade.id"
                                 class="hover:bg-gray-50 border-b border-gray-200"
                             >
-                                <!-- --- FIM DA ALTERAÇÃO --- -->
                                 <td class="py-3 px-4">{{ entidade.nome }}</td>
                                 <td class="py-3 px-4">
                                     {{ entidade.nif || entidade.nic }}
@@ -180,14 +174,10 @@ const confirmDelete = (entidadeId) => {
                                                 <span class="sr-only"
                                                     >Abrir menu</span
                                                 >
-                                                <!-- --- INÍCIO DA ALTERAÇÃO: Ícone de três pontos vertical --- -->
                                                 <MoreVertical class="w-4 h-4" />
-                                                <!-- --- FIM DA ALTERAÇÃO --- -->
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <!-- --- INÍCIO DA ALTERAÇÃO: Rótulo "Ações" removido --- -->
-                                            <!-- <DropdownMenuLabel>Ações</DropdownMenuLabel> -->
                                             <DropdownMenuItem
                                                 @select="
                                                     editEntidade(entidade.id)
@@ -206,20 +196,12 @@ const confirmDelete = (entidadeId) => {
                                                 <Trash2 class="w-4 h-4 mr-2" />
                                                 Eliminar
                                             </DropdownMenuItem>
-                                            <!-- --- FIM DA ALTERAÇÃO --- -->
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-
-                    <div
-                        v-if="entidades.links.length > 3"
-                        class="mt-6 flex justify-center"
-                    >
-                        <!-- Paginação (sem alterações) -->
-                    </div>
                 </div>
             </div>
         </div>
