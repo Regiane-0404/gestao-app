@@ -11,23 +11,17 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
 use Carbon\Carbon;
 
-
 class PropostaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        // A relação no modelo Proposta chama-se 'cliente', não 'entidade'
-        $query = Proposta::with('cliente'); // <-- CORRIGIDO AQUI
+        $query = Proposta::with('cliente');
 
         if ($request->filled('search')) {
             $searchTerm = $request->search;
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('id', 'like', "%{$searchTerm}%")
-                    // A relação no modelo Proposta chama-se 'cliente'
-                    ->orWhereHas('cliente', function ($q) use ($searchTerm) { // <-- CORRIGIDO AQUI
+                    ->orWhereHas('cliente', function ($q) use ($searchTerm) {
                         $q->where('nome', 'like', "%{$searchTerm}%");
                     });
             });
@@ -43,35 +37,25 @@ class PropostaController extends Controller
 
     public function create()
     {
-        // --- INÍCIO DA ALTERAÇÃO ---
         return Inertia::render('Propostas/Create', [
-            // Enviamos a lista de entidades que são clientes
             'clientes' => Entidade::where('is_cliente', true)->orderBy('nome')->get(['id', 'nome']),
         ]);
-        // --- FIM DA ALTERAÇÃO ---
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // --- INÍCIO DA ALTERAÇÃO ---
         $validatedData = $request->validate([
             'entidade_id' => 'required|exists:entidades,id',
             'validade' => 'required|date',
         ]);
 
-        // Adicionamos o estado padrão
         $validatedData['estado'] = 'rascunho';
 
-        // Criamos a proposta
         $proposta = Proposta::create($validatedData);
 
-        // Redirecionamos para a página de EDIÇÃO para adicionar as linhas
         return Redirect::route('propostas.edit', $proposta->id)->with('success', 'Proposta criada. Adicione os artigos.');
-        // --- FIM DA ALTERAÇÃO ---
     }
+
     public function edit(Proposta $proposta)
     {
         return Inertia::render('Propostas/Edit', [
@@ -81,19 +65,43 @@ class PropostaController extends Controller
 
     public function update(Request $request, Proposta $proposta)
     {
-        // Lógica de update do cabeçalho virá aqui (ex: mudar estado)
-        // Por agora, vamos apenas redirecionar.
-        return Redirect::route('propostas.index')->with('success', 'Proposta atualizada.');
+        // Impede a alteração se a proposta já estiver fechada
+        if ($proposta->estado === 'fechado') {
+            abort(403, 'Não é possível alterar uma proposta fechada.');
+        }
+
+        $validatedData = $request->validate([
+            'estado' => 'sometimes|in:rascunho,fechado',
+            'validade' => 'sometimes|required|date', // <-- Adicionar validação para a validade
+        ]);
+
+        if (isset($validatedData['estado']) && $validatedData['estado'] === 'fechado' && is_null($proposta->data_proposta)) {
+            $validatedData['data_proposta'] = now();
+        }
+
+        $proposta->update($validatedData);
+
+        return Redirect::back()->with('success', 'Proposta atualizada com sucesso.');
     }
 
     public function destroy(Proposta $proposta)
     {
+        // Proteção opcional
+        // if ($proposta->estado === 'fechado') {
+        //     abort(403, 'Não é possível eliminar uma proposta fechada.');
+        // }
         $proposta->delete();
         return Redirect::back()->with('success', 'Proposta eliminada com sucesso.');
     }
 
     public function adicionarLinha(Request $request, Proposta $proposta)
     {
+        // --- INÍCIO DA PROTEÇÃO ---
+        if ($proposta->estado === 'fechado') {
+            abort(403, 'Não é possível adicionar artigos a uma proposta fechada.');
+        }
+        // --- FIM DA PROTEÇÃO ---
+
         $validatedData = $request->validate([
             'artigo_id' => 'required|exists:artigos,id',
         ]);
@@ -116,10 +124,35 @@ class PropostaController extends Controller
 
     public function removerLinha(PropostaLinha $propostaLinha)
     {
+        // --- INÍCIO DA PROTEÇÃO ---
+        if ($propostaLinha->proposta->estado === 'fechado') {
+            abort(403, 'Não é possível remover artigos de uma proposta fechada.');
+        }
+        // --- FIM DA PROTEÇÃO ---
+
         $proposta = $propostaLinha->proposta;
         $propostaLinha->delete();
         $this->recalculateTotal($proposta);
         return Redirect::back()->with('success', 'Artigo removido da proposta.');
+    }
+
+    public function atualizarLinha(Request $request, PropostaLinha $propostaLinha)
+    {
+        // --- INÍCIO DA PROTEÇÃO ---
+        if ($propostaLinha->proposta->estado === 'fechado') {
+            abort(403, 'Não é possível alterar artigos de uma proposta fechada.');
+        }
+        // --- FIM DA PROTEÇÃO ---
+
+        $validatedData = $request->validate([
+            'quantidade' => 'required|numeric|min:0.01',
+        ]);
+
+        $propostaLinha->update($validatedData);
+
+        $this->recalculateTotal($propostaLinha->proposta);
+
+        return Redirect::back()->with('success', 'Linha da proposta atualizada.');
     }
 
     private function recalculateTotal(Proposta $proposta)

@@ -1,6 +1,5 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-// --- INÍCIO DA ADIÇÃO ---
 import { Head, Link, router } from '@inertiajs/vue3'
 import { MoreVertical, Trash2 } from 'lucide-vue-next'
 import {
@@ -10,7 +9,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
-// --- FIM DA ADIÇÃO ---
 import { Badge } from '@/Components/ui/badge'
 import Button from '@/Components/ui/button/Button.vue'
 
@@ -19,7 +17,6 @@ const props = defineProps({
     filters: Object,
 })
 
-// Função para formatar o preço como moeda
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-PT', {
         style: 'currency',
@@ -27,7 +24,6 @@ const formatCurrency = (value) => {
     }).format(value)
 }
 
-// Função para formatar a data
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
     const date = new Date(dateString)
@@ -38,20 +34,17 @@ const formatDate = (dateString) => {
     })
 }
 
-// --- ADICIONE ESTAS NOVAS FUNÇÕES ---
 const editProposta = (propostaId) => {
     router.get(route('propostas.edit', propostaId))
 }
 
 const confirmDelete = (propostaId) => {
     if (confirm('Tem a certeza que deseja eliminar esta proposta?')) {
-        // Por agora, isto vai dar erro no backend, o que é esperado
         router.delete(route('propostas.destroy', propostaId), {
             preserveScroll: true,
         })
     }
 }
-// --- FIM DA ADIÇÃO ---
 </script>
 
 <template>
@@ -70,9 +63,7 @@ const confirmDelete = (propostaId) => {
                     class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
                 >
                     <div class="flex justify-between items-center mb-6">
-                        <!-- (Espaço para a barra de pesquisa futura) -->
                         <div></div>
-
                         <Link :href="route('propostas.create')">
                             <Button>Adicionar Proposta</Button>
                         </Link>
@@ -172,13 +163,27 @@ const confirmDelete = (propostaId) => {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
+                                            <!-- --- INÍCIO DA CORREÇÃO --- -->
                                             <DropdownMenuItem
+                                                v-if="
+                                                    proposta.estado ===
+                                                    'rascunho'
+                                                "
                                                 @select="
                                                     editProposta(proposta.id)
                                                 "
                                                 class="cursor-pointer"
                                             >
                                                 Editar
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                v-else
+                                                @select="
+                                                    editProposta(proposta.id)
+                                                "
+                                                class="cursor-pointer"
+                                            >
+                                                Ver Detalhes
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
@@ -190,19 +195,13 @@ const confirmDelete = (propostaId) => {
                                                 <Trash2 class="w-4 h-4 mr-2" />
                                                 Eliminar
                                             </DropdownMenuItem>
+                                            <!-- --- FIM DA CORREÇÃO --- -->
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-
-                    <div
-                        v-if="propostas.links.length > 3"
-                        class="mt-6 flex justify-center"
-                    >
-                        <!-- (Paginação virá aqui) -->
-                    </div>
                 </div>
             </div>
         </div>

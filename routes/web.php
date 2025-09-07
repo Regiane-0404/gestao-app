@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('propostas', PropostaController::class);
     Route::post('propostas/{proposta}/linhas', [PropostaController::class, 'adicionarLinha'])->name('propostas.linhas.store');
     Route::delete('propostas/linhas/{propostaLinha}', [PropostaController::class, 'removerLinha'])->name('propostas.linhas.destroy');
+    Route::patch('propostas/linhas/{propostaLinha}', [PropostaController::class, 'atualizarLinha'])->name('propostas.linhas.update');
 
     // --- Módulo de Configurações ---
     Route::prefix('configuracoes')->name('configuracoes.')->group(function () {

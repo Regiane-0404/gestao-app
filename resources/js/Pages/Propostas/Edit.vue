@@ -1,10 +1,12 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import { Badge } from '@/Components/ui/badge'
 import Button from '@/Components/ui/button/Button.vue'
 import { Input } from '@/Components/ui/input'
-import { ref, watch } from 'vue'
+import { Label } from '@/Components/ui/label'
+import { Textarea } from '@/Components/ui/textarea'
+import { ref, watch, computed } from 'vue'
 import debounce from 'lodash.debounce'
 import axios from 'axios'
 import { Trash2 } from 'lucide-vue-next'
@@ -13,12 +15,37 @@ const props = defineProps({
     proposta: Object,
 })
 
+// Formulário para o cabeçalho, agora com a validade
+const formProposta = useForm({
+    estado: props.proposta.estado,
+    validade: new Date(props.proposta.validade).toISOString().split('T')[0], // Formato YYYY-MM-DD
+})
+
+const isFechado = computed(() => props.proposta.estado === 'fechado')
+
+// Propriedade computada para calcular os totais em tempo real
+const totais = computed(() => {
+    const subtotal = props.proposta.linhas.reduce(
+        (acc, linha) => acc + linha.quantidade * linha.preco_unitario,
+        0
+    )
+    const totalIva = props.proposta.linhas.reduce(
+        (acc, linha) =>
+            acc +
+            linha.quantidade * linha.preco_unitario * (linha.taxa_iva / 100),
+        0
+    )
+    const totalGeral = subtotal + totalIva
+    return { subtotal, totalIva, totalGeral }
+})
+
+const formLinha = useForm({ quantidade: null })
+
 const searchTerm = ref('')
 const searchResults = ref([])
 const isSearching = ref(false)
-const isSearchFocused = ref(false) // Novo estado para controlar o foco
+const isSearchFocused = ref(false)
 
-// Função para pesquisar artigos
 const searchArtigos = async () => {
     if (searchTerm.value.length < 2) {
         searchResults.value = []
@@ -32,15 +59,12 @@ const searchArtigos = async () => {
         searchResults.value = response.data
     } catch (error) {
         console.error('Erro ao pesquisar artigos:', error)
-        searchResults.value = []
     } finally {
         isSearching.value = false
     }
 }
-
 watch(searchTerm, debounce(searchArtigos, 300))
 
-// Adicionar artigo à proposta
 const addArtigoToProposta = (artigo) => {
     router.post(
         route('propostas.linhas.store', props.proposta.id),
@@ -50,14 +74,12 @@ const addArtigoToProposta = (artigo) => {
             onSuccess: () => {
                 searchTerm.value = ''
                 searchResults.value = []
-                isSearchFocused.value = false // Esconde a lista após o sucesso
+                isSearchFocused.value = false
             },
         }
     )
 }
 
-// --- CORREÇÃO ---
-// Remover linha da proposta (deve estar fora da função acima)
 const removeLinha = (linhaId) => {
     if (confirm('Tem a certeza que deseja remover este artigo da proposta?')) {
         router.delete(route('propostas.linhas.destroy', linhaId), {
@@ -66,11 +88,31 @@ const removeLinha = (linhaId) => {
     }
 }
 
-// Funções de foco da pesquisa
+const updateQuantidade = (linha) => {
+    if (linha.quantidade && linha.quantidade > 0) {
+        formLinha.quantidade = linha.quantidade
+        router.patch(
+            route('propostas.linhas.update', linha.id),
+            { quantidade: formLinha.quantidade },
+            { preserveScroll: true }
+        )
+    } else {
+        router.reload({ only: ['proposta'] })
+    }
+}
+
+const submitProposta = () => {
+    formProposta.put(route('propostas.update', props.proposta.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            formProposta.reset()
+        },
+    })
+}
+
 const handleSearchFocus = () => {
     isSearchFocused.value = true
 }
-
 const handleSearchBlur = () => {
     setTimeout(() => {
         isSearchFocused.value = false
@@ -93,7 +135,7 @@ const handleSearchBlur = () => {
                 <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-6">
                     <!-- Resumo da proposta -->
                     <div
-                        class="grid grid-cols-1 md:grid-cols-3 gap-6 border-b pb-6"
+                        class="grid grid-cols-1 md:grid-cols-3 gap-6 border-b pb-6 items-end"
                     >
                         <div>
                             <h3 class="text-sm font-medium text-gray-500">
@@ -104,16 +146,14 @@ const handleSearchBlur = () => {
                             </p>
                         </div>
                         <div>
-                            <h3 class="text-sm font-medium text-gray-500">
-                                Validade
-                            </h3>
-                            <p class="text-lg font-semibold text-gray-900">
-                                {{
-                                    new Date(
-                                        proposta.validade
-                                    ).toLocaleDateString('pt-PT')
-                                }}
-                            </p>
+                            <Label for="validade">Validade</Label>
+                            <Input
+                                id="validade"
+                                type="date"
+                                v-model="formProposta.validade"
+                                :disabled="isFechado"
+                                class="mt-1"
+                            />
                         </div>
                         <div>
                             <h3 class="text-sm font-medium text-gray-500">
@@ -137,8 +177,8 @@ const handleSearchBlur = () => {
                             Artigos da Proposta
                         </h3>
 
-                        <!-- Pesquisa -->
-                        <div class="relative max-w-md mb-4">
+                        <!-- Pesquisa de Artigos -->
+                        <div v-if="!isFechado" class="relative max-w-md mb-4">
                             <Input
                                 v-model="searchTerm"
                                 type="text"
@@ -147,7 +187,6 @@ const handleSearchBlur = () => {
                                 @focus="handleSearchFocus"
                                 @blur="handleSearchBlur"
                             />
-                            <!-- Lista de Resultados da Pesquisa -->
                             <div
                                 v-if="isSearchFocused && searchTerm.length > 0"
                                 class="absolute z-10 w-full bg-white border rounded-md mt-1 shadow-lg"
@@ -173,7 +212,7 @@ const handleSearchBlur = () => {
                                         </li>
                                     </ul>
                                 </div>
-                                <div v-else class="p-2 text-sm text-gray-500">
+                                <div velse class="p-2 text-sm text-gray-500">
                                     Nenhum artigo encontrado.
                                 </div>
                             </div>
@@ -192,7 +231,9 @@ const handleSearchBlur = () => {
                                         <th class="p-2 font-medium">
                                             Descrição
                                         </th>
-                                        <th class="p-2 font-medium">Qtd.</th>
+                                        <th class="p-2 font-medium w-24">
+                                            Qtd.
+                                        </th>
                                         <th class="p-2 font-medium">
                                             Preço Unit.
                                         </th>
@@ -221,8 +262,19 @@ const handleSearchBlur = () => {
                                         <td class="p-2 text-sm">
                                             {{ linha.descricao }}
                                         </td>
-                                        <td class="p-2 text-sm">
-                                            {{ linha.quantidade }}
+                                        <td class="p-2">
+                                            <Input
+                                                type="number"
+                                                v-model="linha.quantidade"
+                                                @blur="updateQuantidade(linha)"
+                                                @keydown.enter.prevent="
+                                                    updateQuantidade(linha)
+                                                "
+                                                class="w-20 h-8 text-sm"
+                                                step="1"
+                                                min="1"
+                                                :disabled="isFechado"
+                                            />
                                         </td>
                                         <td class="p-2 text-sm">
                                             {{ linha.preco_unitario }}€
@@ -241,6 +293,7 @@ const handleSearchBlur = () => {
                                         </td>
                                         <td class="p-2 text-center">
                                             <Button
+                                                v-if="!isFechado"
                                                 @click="removeLinha(linha.id)"
                                                 variant="ghost"
                                                 size="icon"
@@ -255,10 +308,64 @@ const handleSearchBlur = () => {
                         </div>
                     </div>
 
-                    <div class="flex justify-end pt-6 border-t">
-                        <Link :href="route('propostas.index')">
-                            <Button variant="outline">Voltar à Lista</Button>
-                        </Link>
+                    <!-- Bloco de Totais e Botões de Ação -->
+                    <div class="flex justify-between items-start pt-6 border-t">
+                        <div class="flex items-center space-x-2">
+                            <Link :href="route('propostas.index')">
+                                <Button variant="outline"
+                                    >Voltar à Lista</Button
+                                >
+                            </Link>
+
+                            <template v-if="isFechado">
+                                <Button>Download PDF</Button>
+                                <Button>Converter em Encomenda</Button>
+                            </template>
+
+                            <template v-else>
+                                <Button
+                                    @click="submitProposta"
+                                    :disabled="formProposta.processing"
+                                >
+                                    Guardar Rascunho
+                                </Button>
+                                <Button
+                                    @click="
+                                        () => {
+                                            formProposta.estado = 'fechado'
+                                            submitProposta()
+                                        }
+                                    "
+                                    :disabled="
+                                        formProposta.processing ||
+                                        proposta.linhas.length === 0
+                                    "
+                                >
+                                    Finalizar e Fechar Proposta
+                                </Button>
+                            </template>
+                        </div>
+
+                        <div class="w-1/3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="font-medium"
+                                    >{{ totais.subtotal.toFixed(2) }}€</span
+                                >
+                            </div>
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="text-gray-600">Total IVA:</span>
+                                <span class="font-medium"
+                                    >{{ totais.totalIva.toFixed(2) }}€</span
+                                >
+                            </div>
+                            <div
+                                class="flex justify-between text-lg mt-2 font-bold border-t pt-2"
+                            >
+                                <span>Total:</span>
+                                <span>{{ totais.totalGeral.toFixed(2) }}€</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
