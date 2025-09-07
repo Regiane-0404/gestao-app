@@ -1,13 +1,19 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\EntidadeController;
-use App\Http\Controllers\ContactoController;
-use App\Http\Controllers\PropostaController;
 use App\Http\Controllers\ArtigoController;
+use App\Http\Controllers\ContactoController;
+use App\Http\Controllers\EntidadeController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PropostaController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+/*
+|--------------------------------------------------------------------------
+| Rotas Públicas
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -18,26 +24,47 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
+/*
+|--------------------------------------------------------------------------
+| Rotas Protegidas por Autenticação
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
+
+    // --- Dashboard ---
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard');
+    })->middleware(['verified'])->name('dashboard');
+
+    // --- Perfil do Utilizador ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // --- Módulo de Entidades ---
     Route::resource('clientes', EntidadeController::class);
-    // Rotas para Fornecedores 
     Route::resource('fornecedores', EntidadeController::class)
         ->parameters(['fornecedores' => 'fornecedor'])
         ->names('fornecedores');
+
+    // --- Módulo de Contactos ---
     Route::resource('contactos', ContactoController::class);
-    // Rotas para Propostas
+
+    // --- Módulo de Propostas ---
     Route::resource('propostas', PropostaController::class);
-    // --- Rotas de Configuração ---
+    Route::post('propostas/{proposta}/linhas', [PropostaController::class, 'adicionarLinha'])->name('propostas.linhas.store');
+    Route::delete('propostas/linhas/{propostaLinha}', [PropostaController::class, 'removerLinha'])->name('propostas.linhas.destroy');
+
+    // --- Módulo de Configurações ---
     Route::prefix('configuracoes')->name('configuracoes.')->group(function () {
+        // API para pesquisa de artigos
+        Route::get('artigos/search', [ArtigoController::class, 'search'])->name('artigos.search');
+
+        // CRUD de Artigos
         Route::resource('artigos', ArtigoController::class);
-        // No futuro, outras rotas de configuração (IVA, Funções, etc.) virão aqui
+
+        // Outras rotas de configuração (IVA, Funções, etc.) virão aqui no futuro
     });
 });
+
 require __DIR__ . '/auth.php';

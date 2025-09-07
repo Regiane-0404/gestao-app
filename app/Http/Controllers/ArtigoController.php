@@ -91,4 +91,25 @@ class ArtigoController extends Controller
 
         return Redirect::back()->with('success', 'Artigo eliminado com sucesso.');
     }
+    public function search(Request $request)
+    {
+        // Valida se um termo de pesquisa foi enviado
+        $request->validate([
+            'term' => 'required|string|min:2',
+        ]);
+
+        $searchTerm = $request->term;
+
+        $artigos = Artigo::with('iva') // Carrega a informação do IVA
+            ->where('estado', 'ativo') // Apenas pesquisa em artigos ativos
+            ->where(function ($query) use ($searchTerm) {
+                $query->where('nome', 'like', "%{$searchTerm}%")
+                    ->orWhere('referencia', 'like', "%{$searchTerm}%");
+            })
+            ->take(10) // Limita o número de resultados para performance
+            ->get();
+
+        // Devolve os resultados como JSON
+        return response()->json($artigos);
+    }
 }

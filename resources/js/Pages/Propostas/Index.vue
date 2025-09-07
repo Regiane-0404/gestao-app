@@ -1,6 +1,16 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Head, Link } from '@inertiajs/vue3'
+// --- INÍCIO DA ADIÇÃO ---
+import { Head, Link, router } from '@inertiajs/vue3'
+import { MoreVertical, Trash2 } from 'lucide-vue-next'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu'
+// --- FIM DA ADIÇÃO ---
 import { Badge } from '@/Components/ui/badge'
 import Button from '@/Components/ui/button/Button.vue'
 
@@ -27,6 +37,21 @@ const formatDate = (dateString) => {
         day: '2-digit',
     })
 }
+
+// --- ADICIONE ESTAS NOVAS FUNÇÕES ---
+const editProposta = (propostaId) => {
+    router.get(route('propostas.edit', propostaId))
+}
+
+const confirmDelete = (propostaId) => {
+    if (confirm('Tem a certeza que deseja eliminar esta proposta?')) {
+        // Por agora, isto vai dar erro no backend, o que é esperado
+        router.delete(route('propostas.destroy', propostaId), {
+            preserveScroll: true,
+        })
+    }
+}
+// --- FIM DA ADIÇÃO ---
 </script>
 
 <template>
@@ -134,7 +159,39 @@ const formatDate = (dateString) => {
                                     </Badge>
                                 </td>
                                 <td class="py-3 px-4 text-right">
-                                    <!-- (Espaço para o menu de ações futuro) -->
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger as-child>
+                                            <Button
+                                                variant="ghost"
+                                                class="w-8 h-8 p-0"
+                                            >
+                                                <span class="sr-only"
+                                                    >Abrir menu</span
+                                                >
+                                                <MoreVertical class="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                @select="
+                                                    editProposta(proposta.id)
+                                                "
+                                                class="cursor-pointer"
+                                            >
+                                                Editar
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                @select="
+                                                    confirmDelete(proposta.id)
+                                                "
+                                                class="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                            >
+                                                <Trash2 class="w-4 h-4 mr-2" />
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </td>
                             </tr>
                         </tbody>

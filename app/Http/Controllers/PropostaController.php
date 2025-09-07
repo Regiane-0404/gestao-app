@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Proposta;
+use App\Models\PropostaLinha;
 use App\Models\Entidade;
+use App\Models\Artigo;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
@@ -70,28 +72,63 @@ class PropostaController extends Controller
         return Redirect::route('propostas.edit', $proposta->id)->with('success', 'Proposta criada. Adicione os artigos.');
         // --- FIM DA ALTERAÇÃO ---
     }
-
     public function edit(Proposta $proposta)
     {
         return Inertia::render('Propostas/Edit', [
-            // Usamos o load() para carregar a relação do cliente de forma eficiente
-            'proposta' => $proposta->load('cliente'),
+            'proposta' => $proposta->load(['cliente', 'linhas']),
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Proposta $proposta)
     {
-        //
+        // Lógica de update do cabeçalho virá aqui (ex: mudar estado)
+        // Por agora, vamos apenas redirecionar.
+        return Redirect::route('propostas.index')->with('success', 'Proposta atualizada.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Proposta $proposta)
     {
-        //
+        $proposta->delete();
+        return Redirect::back()->with('success', 'Proposta eliminada com sucesso.');
+    }
+
+    public function adicionarLinha(Request $request, Proposta $proposta)
+    {
+        $validatedData = $request->validate([
+            'artigo_id' => 'required|exists:artigos,id',
+        ]);
+
+        $artigo = Artigo::with('iva')->findOrFail($validatedData['artigo_id']);
+
+        $proposta->linhas()->create([
+            'artigo_id' => $artigo->id,
+            'referencia' => $artigo->referencia,
+            'descricao' => $artigo->nome,
+            'quantidade' => 1,
+            'preco_unitario' => $artigo->preco,
+            'taxa_iva' => $artigo->iva->taxa,
+        ]);
+
+        $this->recalculateTotal($proposta);
+
+        return Redirect::back()->with('success', 'Artigo adicionado à proposta.');
+    }
+
+    public function removerLinha(PropostaLinha $propostaLinha)
+    {
+        $proposta = $propostaLinha->proposta;
+        $propostaLinha->delete();
+        $this->recalculateTotal($proposta);
+        return Redirect::back()->with('success', 'Artigo removido da proposta.');
+    }
+
+    private function recalculateTotal(Proposta $proposta)
+    {
+        $total = $proposta->linhas()->get()->reduce(function ($carry, $linha) {
+            $totalLinha = $linha->quantidade * $linha->preco_unitario * (1 + $linha->taxa_iva / 100);
+            return $carry + $totalLinha;
+        }, 0);
+
+        $proposta->update(['valor_total' => $total]);
     }
 }
