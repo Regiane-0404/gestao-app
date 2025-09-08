@@ -65,14 +65,13 @@ class PropostaController extends Controller
 
     public function update(Request $request, Proposta $proposta)
     {
-        // Impede a alteração se a proposta já estiver fechada
         if ($proposta->estado === 'fechado') {
             abort(403, 'Não é possível alterar uma proposta fechada.');
         }
 
         $validatedData = $request->validate([
             'estado' => 'sometimes|in:rascunho,fechado',
-            'validade' => 'sometimes|required|date', // <-- Adicionar validação para a validade
+            'validade' => 'sometimes|required|date',
         ]);
 
         if (isset($validatedData['estado']) && $validatedData['estado'] === 'fechado' && is_null($proposta->data_proposta)) {
@@ -81,9 +80,14 @@ class PropostaController extends Controller
 
         $proposta->update($validatedData);
 
-        return Redirect::back()->with('success', 'Proposta atualizada com sucesso.');
-    }
+        // --- INÍCIO DA CORREÇÃO ---
+        // Usamos o helper de sessão diretamente para garantir que a mensagem é gravada.
+        session()->flash('success', 'As alterações foram guardadas.');
 
+
+        return Redirect::back();
+        // --- FIM DA CORREÇÃO ---
+    }
     public function destroy(Proposta $proposta)
     {
         // Proteção opcional

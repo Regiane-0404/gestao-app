@@ -7,16 +7,19 @@ const props = defineProps({
   variant: { type: null, required: false },
   size: { type: null, required: false },
   class: { type: null, required: false },
-  asChild: { type: Boolean, required: false },
+  asChild: { type: Boolean, required: false, default: false },
   as: { type: null, required: false, default: "button" },
+  disabled: { type: Boolean, required: false, default: false },
 });
 </script>
 
 <template>
   <Primitive
-    :as="as"
+    :as="asChild ? 'span' : 'button'" 
     :as-child="asChild"
     :class="cn(buttonVariants({ variant, size }), props.class)"
+    :disabled="!asChild ? disabled : undefined" 
+    type="button"
   >
     <slot />
   </Primitive>

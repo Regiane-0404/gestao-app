@@ -15,15 +15,15 @@ const props = defineProps({
     proposta: Object,
 })
 
-// Formulário para o cabeçalho, agora com a validade
+// Formulário para o cabeçalho (estado e validade)
 const formProposta = useForm({
     estado: props.proposta.estado,
-    validade: new Date(props.proposta.validade).toISOString().split('T')[0], // Formato YYYY-MM-DD
+    validade: new Date(props.proposta.validade).toISOString().split('T')[0],
 })
 
 const isFechado = computed(() => props.proposta.estado === 'fechado')
 
-// Propriedade computada para calcular os totais em tempo real
+// Calcula os totais em tempo real
 const totais = computed(() => {
     const subtotal = props.proposta.linhas.reduce(
         (acc, linha) => acc + linha.quantidade * linha.preco_unitario,
@@ -39,8 +39,7 @@ const totais = computed(() => {
     return { subtotal, totalIva, totalGeral }
 })
 
-const formLinha = useForm({ quantidade: null })
-
+// Lógica de pesquisa e gestão de linhas
 const searchTerm = ref('')
 const searchResults = ref([])
 const isSearching = ref(false)
@@ -90,10 +89,9 @@ const removeLinha = (linhaId) => {
 
 const updateQuantidade = (linha) => {
     if (linha.quantidade && linha.quantidade > 0) {
-        formLinha.quantidade = linha.quantidade
         router.patch(
             route('propostas.linhas.update', linha.id),
-            { quantidade: formLinha.quantidade },
+            { quantidade: linha.quantidade }, // Envia a quantidade diretamente
             { preserveScroll: true }
         )
     } else {
@@ -102,10 +100,13 @@ const updateQuantidade = (linha) => {
 }
 
 const submitProposta = () => {
+    // Para "Guardar Rascunho", garantimos que o estado a ser enviado é 'rascunho'
+    formProposta.estado = 'rascunho'
+
     formProposta.put(route('propostas.update', props.proposta.id), {
         preserveScroll: true,
         onSuccess: () => {
-            formProposta.reset()
+            // Não é necessário resetar, pois o formulário recarrega com os dados da prop
         },
     })
 }
@@ -177,7 +178,6 @@ const handleSearchBlur = () => {
                             Artigos da Proposta
                         </h3>
 
-                        <!-- Pesquisa de Artigos -->
                         <div v-if="!isFechado" class="relative max-w-md mb-4">
                             <Input
                                 v-model="searchTerm"
@@ -218,7 +218,6 @@ const handleSearchBlur = () => {
                             </div>
                         </div>
 
-                        <!-- Tabela de Linhas Adicionadas -->
                         <div class="border rounded-lg overflow-hidden">
                             <table class="min-w-full">
                                 <thead
@@ -308,7 +307,6 @@ const handleSearchBlur = () => {
                         </div>
                     </div>
 
-                    <!-- Bloco de Totais e Botões de Ação -->
                     <div class="flex justify-between items-start pt-6 border-t">
                         <div class="flex items-center space-x-2">
                             <Link :href="route('propostas.index')">
