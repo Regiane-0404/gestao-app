@@ -1,29 +1,25 @@
 <?php
 
+
 use App\Http\Controllers\ArtigoController;
 use App\Http\Controllers\ContactoController;
 use App\Http\Controllers\EntidadeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropostaController;
 use App\Http\Controllers\EncomendaController;
+use App\Http\Controllers\Gestao\RoleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// ... (o resto do ficheiro continua igual)
 
 /*
 |--------------------------------------------------------------------------
 | Rotas Públicas
 |--------------------------------------------------------------------------
 */
-
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', function () { /* ... */ });
 
 /*
 |--------------------------------------------------------------------------
@@ -33,25 +29,17 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
 
     // --- Dashboard ---
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->middleware(['verified'])->name('dashboard');
+    Route::get('/dashboard', function () { /* ... */ })->middleware(['verified'])->name('dashboard');
 
     // --- Perfil do Utilizador ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- Módulo de Entidades ---
+    // --- Módulos Principais ---
     Route::resource('clientes', EntidadeController::class);
-    Route::resource('fornecedores', EntidadeController::class)
-        ->parameters(['fornecedores' => 'fornecedor'])
-        ->names('fornecedores');
-
-    // --- Módulo de Contactos ---
+    Route::resource('fornecedores', EntidadeController::class)->parameters(['fornecedores' => 'fornecedor'])->names('fornecedores');
     Route::resource('contactos', ContactoController::class);
-
-    // --- Módulo de Propostas ---
     Route::resource('propostas', PropostaController::class);
     Route::resource('encomendas', EncomendaController::class);
     Route::post('propostas/{proposta}/linhas', [PropostaController::class, 'adicionarLinha'])->name('propostas.linhas.store');
@@ -62,14 +50,16 @@ Route::middleware('auth')->group(function () {
 
     // --- Módulo de Configurações ---
     Route::prefix('configuracoes')->name('configuracoes.')->group(function () {
-        // API para pesquisa de artigos
         Route::get('artigos/search', [ArtigoController::class, 'search'])->name('artigos.search');
-
-        // CRUD de Artigos
         Route::resource('artigos', ArtigoController::class);
-
-        // Outras rotas de configuração (IVA, Funções, etc.) virão aqui no futuro
     });
+
+    // --- INÍCIO DA CORREÇÃO ---
+    // Módulo de Gestão de Acessos (agora ao mesmo nível que Configurações)
+    Route::prefix('gestao')->name('gestao.')->group(function () {
+        Route::resource('roles', RoleController::class);
+    });
+    // --- FIM DA CORREÇÃO ---
 });
 
 require __DIR__ . '/auth.php';
