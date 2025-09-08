@@ -5,6 +5,7 @@ use App\Http\Controllers\ContactoController;
 use App\Http\Controllers\EntidadeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropostaController;
+use App\Http\Controllers\EncomendaController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -52,9 +53,12 @@ Route::middleware('auth')->group(function () {
 
     // --- Módulo de Propostas ---
     Route::resource('propostas', PropostaController::class);
+    Route::resource('encomendas', EncomendaController::class);
     Route::post('propostas/{proposta}/linhas', [PropostaController::class, 'adicionarLinha'])->name('propostas.linhas.store');
     Route::delete('propostas/linhas/{propostaLinha}', [PropostaController::class, 'removerLinha'])->name('propostas.linhas.destroy');
     Route::patch('propostas/linhas/{propostaLinha}', [PropostaController::class, 'atualizarLinha'])->name('propostas.linhas.update');
+    Route::get('propostas/{proposta}/pdf', [PropostaController::class, 'downloadPDF'])->name('propostas.pdf');
+    Route::post('propostas/{proposta}/converter', [PropostaController::class, 'converterEmEncomenda'])->name('propostas.converter');
 
     // --- Módulo de Configurações ---
     Route::prefix('configuracoes')->name('configuracoes.')->group(function () {

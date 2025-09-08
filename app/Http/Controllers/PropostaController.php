@@ -6,10 +6,14 @@ use App\Models\Proposta;
 use App\Models\PropostaLinha;
 use App\Models\Entidade;
 use App\Models\Artigo;
+use App\Models\Encomenda;
+use App\Models\EncomendaLinha;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
 use Carbon\Carbon;
+use PDF;
+use Illuminate\Support\Facades\DB;
 
 class PropostaController extends Controller
 {
@@ -60,6 +64,9 @@ class PropostaController extends Controller
     {
         return Inertia::render('Propostas/Edit', [
             'proposta' => $proposta->load(['cliente', 'linhas']),
+            // --- INÍCIO DA CORREÇÃO ---
+            'encomendaExistenteId' => Encomenda::where('proposta_id', $proposta->id)->value('id'),
+            // --- FIM DA CORREÇÃO ---
         ]);
     }
 
@@ -167,5 +174,77 @@ class PropostaController extends Controller
         }, 0);
 
         $proposta->update(['valor_total' => $total]);
+    }
+    // --- INÍCIO DA ALTERAÇÃO ---
+    /**
+     * Gera e descarrega o PDF de uma proposta.
+     */
+    public function downloadPDF(Proposta $proposta)
+    {
+        // 1. Carrega todas as relações necessárias de uma só vez para performance
+        $proposta->load(['cliente', 'linhas']);
+
+        // 2. Calcula os totais (Subtotal e Total IVA) para passar para a view
+        $subtotal = $proposta->linhas->reduce(function ($carry, $linha) {
+            return $carry + ($linha->quantidade * $linha->preco_unitario);
+        }, 0);
+
+        $totalIva = $proposta->linhas->reduce(function ($carry, $linha) {
+            return $carry + ($linha->quantidade * $linha->preco_unitario * ($linha->taxa_iva / 100));
+        }, 0);
+
+        // 3. Prepara os dados para a view
+        $data = [
+            'proposta' => $proposta,
+            'subtotal' => $subtotal,
+            'totalIva' => $totalIva,
+        ];
+
+        // 4. Gera o PDF
+        $pdf = PDF::loadView('pdf.proposta', $data);
+
+        // 5. Devolve o PDF para o navegador para download
+        // O nome do ficheiro será, por exemplo, "Proposta-1.pdf"
+        return $pdf->download('Proposta-' . $proposta->id . '.pdf');
+    }
+    public function converterEmEncomenda(Proposta $proposta)
+    {
+        // 1. Validação da regra de negócio (só converte se estiver fechada)
+        if ($proposta->estado !== 'fechado') {
+            return Redirect::back()->with('error', 'Apenas propostas fechadas podem ser convertidas.');
+        }
+
+        // 2. Validação para impedir a re-conversão (segurança extra)
+        $encomendaExistente = Encomenda::where('proposta_id', $proposta->id)->first();
+        if ($encomendaExistente) {
+            return Redirect::back()->with('error', 'Esta proposta já foi convertida em encomenda.');
+        }
+
+        // 3. Usar uma transação para garantir a integridade dos dados
+        DB::transaction(function () use ($proposta) {
+            // Criar o cabeçalho da encomenda
+            $novaEncomenda = Encomenda::create([
+                'entidade_id' => $proposta->entidade_id,
+                'proposta_id' => $proposta->id,
+                'data_encomenda' => now(), // A data da encomenda é a data da conversão
+                'valor_total' => $proposta->valor_total,
+                'estado' => 'fechado', // A encomenda já nasce "fechada"
+            ]);
+
+            // Copiar as linhas da proposta para a encomenda
+            foreach ($proposta->linhas as $linha) {
+                $novaEncomenda->linhas()->create([
+                    'artigo_id' => $linha->artigo_id,
+                    'referencia' => $linha->referencia,
+                    'descricao' => $linha->descricao,
+                    'quantidade' => $linha->quantidade,
+                    'preco_unitario' => $linha->preco_unitario,
+                    'taxa_iva' => $linha->taxa_iva,
+                ]);
+            }
+        });
+
+        // 4. Redirecionar DE VOLTA para a página da proposta com uma mensagem de sucesso
+        return Redirect::back()->with('success', 'Proposta convertida em encomenda com sucesso.');
     }
 }

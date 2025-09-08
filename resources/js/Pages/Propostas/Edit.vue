@@ -13,9 +13,10 @@ import { Trash2 } from 'lucide-vue-next'
 
 const props = defineProps({
     proposta: Object,
+    encomendaExistenteId: Number, // Recebe o ID da encomenda, se existir
 })
 
-// Formulário para o cabeçalho (estado e validade)
+// Formulário para o cabeçalho (apenas para a validade e estado)
 const formProposta = useForm({
     estado: props.proposta.estado,
     validade: new Date(props.proposta.validade).toISOString().split('T')[0],
@@ -23,20 +24,17 @@ const formProposta = useForm({
 
 const isFechado = computed(() => props.proposta.estado === 'fechado')
 
-// Calcula os totais em tempo real
+// Lógica de totais
 const totais = computed(() => {
     const subtotal = props.proposta.linhas.reduce(
-        (acc, linha) => acc + linha.quantidade * linha.preco_unitario,
+        (acc, l) => acc + l.quantidade * l.preco_unitario,
         0
     )
     const totalIva = props.proposta.linhas.reduce(
-        (acc, linha) =>
-            acc +
-            linha.quantidade * linha.preco_unitario * (linha.taxa_iva / 100),
+        (acc, l) => acc + l.quantidade * l.preco_unitario * (l.taxa_iva / 100),
         0
     )
-    const totalGeral = subtotal + totalIva
-    return { subtotal, totalIva, totalGeral }
+    return { subtotal, totalIva, totalGeral: subtotal + totalIva }
 })
 
 // Lógica de pesquisa e gestão de linhas
@@ -91,7 +89,7 @@ const updateQuantidade = (linha) => {
     if (linha.quantidade && linha.quantidade > 0) {
         router.patch(
             route('propostas.linhas.update', linha.id),
-            { quantidade: linha.quantidade }, // Envia a quantidade diretamente
+            { quantidade: linha.quantidade },
             { preserveScroll: true }
         )
     } else {
@@ -99,15 +97,10 @@ const updateQuantidade = (linha) => {
     }
 }
 
+// Função de submissão do cabeçalho
 const submitProposta = () => {
-    // Para "Guardar Rascunho", garantimos que o estado a ser enviado é 'rascunho'
-    formProposta.estado = 'rascunho'
-
     formProposta.put(route('propostas.update', props.proposta.id), {
         preserveScroll: true,
-        onSuccess: () => {
-            // Não é necessário resetar, pois o formulário recarrega com os dados da prop
-        },
     })
 }
 
@@ -134,7 +127,7 @@ const handleSearchBlur = () => {
         <div class="py-12">
             <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-6">
-                    <!-- Resumo da proposta -->
+                    <!-- Resumo da proposta com Validade editável -->
                     <div
                         class="grid grid-cols-1 md:grid-cols-3 gap-6 border-b pb-6 items-end"
                     >
@@ -212,7 +205,7 @@ const handleSearchBlur = () => {
                                         </li>
                                     </ul>
                                 </div>
-                                <div velse class="p-2 text-sm text-gray-500">
+                                <div v-else class="p-2 text-sm text-gray-500">
                                     Nenhum artigo encontrado.
                                 </div>
                             </div>
@@ -307,6 +300,7 @@ const handleSearchBlur = () => {
                         </div>
                     </div>
 
+                    <!-- Bloco de Totais e Botões de Ação -->
                     <div class="flex justify-between items-start pt-6 border-t">
                         <div class="flex items-center space-x-2">
                             <Link :href="route('propostas.index')">
@@ -315,9 +309,40 @@ const handleSearchBlur = () => {
                                 >
                             </Link>
 
+                            <!-- --- INÍCIO DA CORREÇÃO --- -->
                             <template v-if="isFechado">
-                                <Button>Download PDF</Button>
-                                <Button>Converter em Encomenda</Button>
+                                <a :href="route('propostas.pdf', proposta.id)">
+                                    <Button>Download PDF</Button>
+                                </a>
+
+                                <!-- Se já existe uma encomenda, mostra um link para ela -->
+                                <Link
+                                    v-if="encomendaExistenteId"
+                                    :href="
+                                        route(
+                                            'encomendas.show',
+                                            encomendaExistenteId
+                                        )
+                                    "
+                                >
+                                    <Button variant="outline"
+                                        >Ver Encomenda Gerada</Button
+                                    >
+                                </Link>
+                                <!-- Se não, mostra o botão para converter -->
+                                <Link
+                                    v-else
+                                    :href="
+                                        route(
+                                            'propostas.converter',
+                                            proposta.id
+                                        )
+                                    "
+                                    method="post"
+                                    as="button"
+                                >
+                                    <Button>Converter em Encomenda</Button>
+                                </Link>
                             </template>
 
                             <template v-else>
@@ -342,8 +367,10 @@ const handleSearchBlur = () => {
                                     Finalizar e Fechar Proposta
                                 </Button>
                             </template>
+                            <!-- --- FIM DA CORREÇÃO --- -->
                         </div>
 
+                        <!-- Tabela de Totais -->
                         <div class="w-1/3">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Subtotal:</span>
