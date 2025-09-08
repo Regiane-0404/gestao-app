@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropostaController;
 use App\Http\Controllers\EncomendaController;
 use App\Http\Controllers\Gestao\RoleController;
+use App\Http\Controllers\Gestao\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,7 +20,9 @@ use Inertia\Inertia;
 | Rotas Públicas
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () { /* ... */ });
+
+Route::get('/', function () { /* ... */
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +32,8 @@ Route::get('/', function () { /* ... */ });
 Route::middleware('auth')->group(function () {
 
     // --- Dashboard ---
-    Route::get('/dashboard', function () { /* ... */ })->middleware(['verified'])->name('dashboard');
+    Route::get('/dashboard', function () { /* ... */
+    })->middleware(['verified'])->name('dashboard');
 
     // --- Perfil do Utilizador ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -58,6 +62,7 @@ Route::middleware('auth')->group(function () {
     // Módulo de Gestão de Acessos (agora ao mesmo nível que Configurações)
     Route::prefix('gestao')->name('gestao.')->group(function () {
         Route::resource('roles', RoleController::class);
+        Route::resource('utilizadores', UserController::class);
     });
     // --- FIM DA CORREÇÃO ---
 });

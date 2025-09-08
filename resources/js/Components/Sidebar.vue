@@ -118,7 +118,6 @@ import {
                             : ''
                     "
                 >
-                    <!-- --- INÍCIO DA CORREÇÃO --- -->
                     <AccordionItem value="gestao-acessos" class="border-none">
                         <AccordionTrigger
                             class="text-white hover:no-underline hover:bg-gray-700 rounded-md"
@@ -132,7 +131,13 @@ import {
                             </div>
                         </AccordionTrigger>
                         <AccordionContent class="pl-8 space-y-2 pt-2">
-                            <NavLink href="#">
+                            <!-- --- CORRIGIDO AQUI --- -->
+                            <NavLink
+                                :href="route('gestao.utilizadores.index')"
+                                :active="
+                                    route().current('gestao.utilizadores.*')
+                                "
+                            >
                                 <Users class="h-4 w-4 mr-2" />
                                 Utilizadores
                             </NavLink>
@@ -145,7 +150,6 @@ import {
                             </NavLink>
                         </AccordionContent>
                     </AccordionItem>
-                    <!-- --- FIM DA CORREÇÃO --- -->
 
                     <AccordionItem value="configuracoes" class="border-none">
                         <AccordionTrigger
