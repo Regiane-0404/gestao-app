@@ -28,18 +28,20 @@ class HandleInertiaRequests extends Middleware
      * @return array<string, mixed>
      */
     public function share(Request $request): array
-    {
+    { 
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                // --- INÍCIO DA ALTERAÇÃO ---
+                // Se o utilizador existir, vai buscar as permissões. Se não, devolve um array vazio.
+                'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name') : [],
+                // --- FIM DA ALTERAÇÃO ---
             ],
-            // --- INÍCIO DA CORREÇÃO ---
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error' => fn() => $request->session()->get('error'),
             ],
-            // --- FIM DA CORREÇÃO ---
         ];
     }
 }

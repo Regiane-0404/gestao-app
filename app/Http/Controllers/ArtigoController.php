@@ -9,7 +9,15 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
 
 class ArtigoController extends Controller
-{
+{ // --- INÍCIO DA ALTERAÇÃO ---
+    public function __construct()
+    {
+        $this->middleware('permission:ver_artigos')->only('index');
+        $this->middleware('permission:criar_artigos')->only(['create', 'store']);
+        $this->middleware('permission:editar_artigos')->only(['edit', 'update']);
+        $this->middleware('permission:eliminar_artigos')->only('destroy');
+    }
+    // --- FIM DA ALTERAÇÃO -
     public function index(Request $request)
     {
         $query = Artigo::with('iva');

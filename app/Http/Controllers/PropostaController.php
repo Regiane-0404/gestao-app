@@ -17,6 +17,15 @@ use Illuminate\Support\Facades\DB;
 
 class PropostaController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:ver_propostas')->only(['index', 'show']);
+        $this->middleware('permission:criar_propostas')->only(['create', 'store']);
+        $this->middleware('permission:editar_propostas')->only(['edit', 'update', 'adicionarLinha', 'removerLinha', 'atualizarLinha']);
+        $this->middleware('permission:eliminar_propostas')->only('destroy');
+        $this->middleware('permission:converter_propostas')->only('converterEmEncomenda');
+    }
     public function index(Request $request)
     {
         $query = Proposta::with('cliente');

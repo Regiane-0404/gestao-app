@@ -11,6 +11,9 @@ use App\Http\Controllers\Gestao\RoleController;
 use App\Http\Controllers\Gestao\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Configuracoes\IvaController; // Adicionar import
+use App\Http\Controllers\Configuracoes\ContactoFuncaoController; // Adicionar import
+
 use Inertia\Inertia;
 
 // ... (o resto do ficheiro continua igual)
@@ -56,6 +59,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('configuracoes')->name('configuracoes.')->group(function () {
         Route::get('artigos/search', [ArtigoController::class, 'search'])->name('artigos.search');
         Route::resource('artigos', ArtigoController::class);
+        Route::resource('ivas', IvaController::class);
+        Route::resource('funcoes-contacto', ContactoFuncaoController::class)->names('contactos.funcoes');
+        Route::post('ivas/{id}/restore', [IvaController::class, 'restore'])->name('ivas.restore');
     });
 
     // --- INÍCIO DA CORREÇÃO ---

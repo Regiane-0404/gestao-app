@@ -174,6 +174,33 @@ import {
                                 <Package class="h-4 w-4 mr-2" />
                                 Artigos
                             </NavLink>
+                            <!-- --- INÍCIO DA ALTERAÇÃO --- -->
+                            <NavLink
+                                :href="route('configuracoes.ivas.index')"
+                                :active="
+                                    route().current('configuracoes.ivas.*')
+                                "
+                            >
+                                <!-- (Pode precisar de importar um ícone de percentagem) -->
+                                <span class="w-4 h-4 mr-2">%</span>
+                                IVA
+                            </NavLink>
+                            <NavLink
+                                :href="
+                                    route(
+                                        'configuracoes.contactos.funcoes.index'
+                                    )
+                                "
+                                :active="
+                                    route().current(
+                                        'configuracoes.contactos.funcoes.*'
+                                    )
+                                "
+                            >
+                                <BookUser class="h-4 w-4 mr-2" />
+                                Funções de Contacto
+                            </NavLink>
+                            <!-- --- FIM DA ALTERAÇÃO --- -->
                             <NavLink href="#">
                                 <Building2 class="h-4 w-4 mr-2" />
                                 Empresa

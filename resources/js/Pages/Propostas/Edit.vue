@@ -1,8 +1,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Head, Link, router, useForm } from '@inertiajs/vue3'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { Badge } from '@/Components/ui/badge'
-import Button from '@/Components/ui/button/Button.vue'
+import { Button } from '@/Components/ui/button'
 import { Input } from '@/Components/ui/input'
 import { Label } from '@/Components/ui/label'
 import { Textarea } from '@/Components/ui/textarea'
@@ -15,6 +15,13 @@ const props = defineProps({
     proposta: Object,
     encomendaExistenteId: Number, // Recebe o ID da encomenda, se existir
 })
+// --- ADICIONE ESTE BLOCO ---
+const page = usePage()
+const userPermissions = computed(() => page.props.auth?.permissions || [])
+const hasPermission = (permission) => {
+    return userPermissions.value.includes(permission)
+}
+// --- FIM DO BLOCO ---
 
 // Formulário para o cabeçalho (apenas para a validade e estado)
 const formProposta = useForm({
@@ -315,7 +322,7 @@ const handleSearchBlur = () => {
                                     <Button>Download PDF</Button>
                                 </a>
 
-                                <!-- Se já existe uma encomenda, mostra um link para ela -->
+                                <!-- --- INÍCIO DA CORREÇÃO --- -->
                                 <Link
                                     v-if="encomendaExistenteId"
                                     :href="
@@ -329,9 +336,11 @@ const handleSearchBlur = () => {
                                         >Ver Encomenda Gerada</Button
                                     >
                                 </Link>
-                                <!-- Se não, mostra o botão para converter -->
                                 <Link
-                                    v-else
+                                    v-if="
+                                        !encomendaExistenteId &&
+                                        hasPermission('converter_propostas')
+                                    "
                                     :href="
                                         route(
                                             'propostas.converter',
@@ -343,6 +352,7 @@ const handleSearchBlur = () => {
                                 >
                                     <Button>Converter em Encomenda</Button>
                                 </Link>
+                                <!-- --- FIM DA CORREÇÃO --- -->
                             </template>
 
                             <template v-else>

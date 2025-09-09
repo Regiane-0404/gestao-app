@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Redirect;
 
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:gerir_gestao_acessos');
+    }
     public function index()
     {
         return Inertia::render('Gestao/Users/Index', [

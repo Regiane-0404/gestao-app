@@ -11,6 +11,10 @@ use Spatie\Permission\Models\Permission; // <-- Adicionar import
 
 class RoleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:gerir_gestao_acessos');
+    }
     public function index()
     {
         return Inertia::render('Gestao/Roles/Index', [

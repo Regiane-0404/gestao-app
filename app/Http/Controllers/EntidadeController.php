@@ -11,6 +11,13 @@ use Illuminate\Support\Facades\Log;
 
 class EntidadeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:ver_entidades')->only('index');
+        $this->middleware('permission:criar_entidades')->only(['create', 'store']);
+        $this->middleware('permission:editar_entidades')->only(['edit', 'update']);
+        $this->middleware('permission:eliminar_entidades')->only('destroy');
+    }
     public function index(Request $request)
     {
         $isFornecedores = $request->routeIs('fornecedores.index');

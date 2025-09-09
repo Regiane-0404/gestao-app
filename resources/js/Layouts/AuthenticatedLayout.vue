@@ -6,6 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue'
 import { ref, watch } from 'vue' // <-- ESTA LINHA ESTAVA EM FALTA OU INCOMPLETA
 
 const page = usePage()
+
 const showFlash = ref(false)
 const flashMessage = ref('')
 const flashKey = ref(0)

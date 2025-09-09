@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\Redirect;
 
 class ContactoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct()
+    {
+        $this->middleware('permission:ver_contactos')->only('index');
+        $this->middleware('permission:criar_contactos')->only(['create', 'store']);
+        $this->middleware('permission:editar_contactos')->only(['edit', 'update']);
+        $this->middleware('permission:eliminar_contactos')->only('destroy');
+    }
     public function index(Request $request)
     {
         $query = Contacto::with(['entidade', 'funcao']);
