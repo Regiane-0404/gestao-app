@@ -62,6 +62,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('ivas', IvaController::class);
         Route::resource('funcoes-contacto', ContactoFuncaoController::class)->names('contactos.funcoes');
         Route::post('ivas/{id}/restore', [IvaController::class, 'restore'])->name('ivas.restore');
+         Route::resource('funcoes-contacto', ContactoFuncaoController::class)->names('contactos.funcoes');
+        Route::post('funcoes-contacto/{id}/restore', [ContactoFuncaoController::class, 'restore'])->name('contactos.funcoes.restore');
     });
 
     // --- INÍCIO DA CORREÇÃO ---
